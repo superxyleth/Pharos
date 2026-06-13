@@ -4,6 +4,8 @@ The current Skill does not execute trades.
 
 For Phase 2 Agent Carnival, an execution extension could be added as a separate module, not as a replacement for the Phase 1 research loop.
 
+Future Phase 2 Agents can consume exported strategy artifacts and combine them with wallet, oracle, DEX, or execution Skills under strict risk controls.
+
 ## Candidate Future Tools
 
 - `strategy_prepare_testnet_order`
@@ -33,3 +35,4 @@ Keep Phase 1 submission research-only.
 
 Use this repository as the strategy lifecycle Skill that a future execution Agent can call before deciding whether an independently guarded execution module should be used.
 
+The exported artifact should be treated as strategy intelligence, not trading authorization.

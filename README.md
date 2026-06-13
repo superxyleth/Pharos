@@ -1,5 +1,7 @@
 # Pharos Quant Strategy Lifecycle Skill
 
+Pharos Quant Strategy Lifecycle Skill is a Phase 1 MCP Skill that lets AI Agents generate, validate, backtest, simulate, and export reusable PHRS strategy artifacts on Pharos Atlantic Testnet, with no live trading or transaction broadcasting.
+
 面向 Pharos Skill-to-Agent Dual Cascade Hackathon Phase 1 的 Pharos-compatible Skill package + MCP service runtime。
 
 本项目提供一个标准化、可复用的 Skill 模块，帮助 Agent 将自然语言交易想法转成可执行策略代码，并完成沙箱校验、多周期回测、AI 优化建议、模拟执行、策略产物导出，以及 Pharos Atlantic 测试网 RPC/钱包只读检查。
@@ -26,6 +28,17 @@
 ```text
 A Pharos-compatible MCP Skill that exposes a reusable quant strategy lifecycle to AI Agents.
 ```
+
+## Phase 1 Safety Boundary
+
+- Research only
+- Backtest only
+- Sandbox simulation only
+- Artifact export only
+- No live trading
+- No transaction broadcast
+- No private key exposure
+- No on-chain state changes
 
 ## 项目定位
 
@@ -76,6 +89,11 @@ Agent 推荐阅读顺序：
 ```text
 examples/evaluator-prompt.md
 ```
+
+Demo 与架构文档：
+
+- `docs/DEMO_FLOW.md`
+- `docs/ARCHITECTURE.md`
 
 ## MCP 工具
 
@@ -254,6 +272,19 @@ exports.evaluate = function(ctx) {
 - Chain ID：`688689`
 - Native Token：`PHRS`
 - Explorer：`https://atlantic.pharosscan.xyz/`
+- Source：Pharos official docs `https://docs.pharosnetwork.xyz/`
+
+机器可读配置：
+
+```json
+{
+  "network": "Pharos Atlantic Testnet",
+  "chainId": 688689,
+  "rpc": "https://atlantic.dplabs-internal.com",
+  "explorer": "https://atlantic.pharosscan.xyz/",
+  "nativeToken": "PHRS"
+}
+```
 
 当前项目只执行只读 RPC 检查，不发起转账、部署或合约写入。
 
@@ -274,3 +305,9 @@ exports.evaluate = function(ctx) {
 - 可直接运行的示例调用和 smoke test
 
 当前项目仅提供研究、回测和模拟能力，不包含链上写入或真实交易执行。
+
+## Phase 2 复用方向
+
+Future Phase 2 Agents can consume exported strategy artifacts and combine them with wallet, oracle, DEX, or execution Skills under strict risk controls.
+
+当前 artifact 是策略研究产物，不是交易授权。未来如接入执行型 Skill，应作为独立、默认关闭、强确认的模块，并继续保留本项目的研究闭环作为前置风控步骤。

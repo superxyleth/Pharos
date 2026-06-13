@@ -18,6 +18,8 @@ Phase 1 is focused on reusable Skill modules. This project is not a full trading
 
 The current version is research-only and deliberately avoids live execution. That makes it suitable for safe Agent evaluation while still providing a realistic strategy lifecycle for Pharos-oriented workflows.
 
+Future Phase 2 Agents can consume exported strategy artifacts and combine them with wallet, oracle, DEX, or execution Skills under strict risk controls.
+
 ## Runtime Model
 
 This repository supports two Agent-facing layers:
@@ -26,4 +28,3 @@ This repository supports two Agent-facing layers:
 - MCP runtime layer: HTTP MCP endpoint with discoverable tools.
 
 Agents should use the package files for understanding and the MCP endpoint for execution.
-

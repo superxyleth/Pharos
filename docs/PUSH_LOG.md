@@ -163,3 +163,24 @@ M README.md
 ?? examples/evaluator-prompt.md
 ?? references/
 ```
+
+### 20260613-222146 strengthen hackathon demo docs and phase2 positioning
+
+- Branch: `main`
+- Previous HEAD: `dbb4b2a`
+- Memory tag: `memory/20260613-222146-strengthen-hackathon-demo-docs-and-phase`
+- Executed:
+  - Updated `docs/PUSH_LOG.md`
+  - Staged current tracked and untracked safe files
+  - Created a Git commit
+  - Created an annotated memory tag
+  - Pushed branch and tags to `origin`
+- Workspace changes before push:
+```text
+M README.md
+ M examples/evaluator-prompt.md
+ M references/future-phase2-execution.md
+ M references/overview.md
+?? docs/ARCHITECTURE.md
+?? docs/DEMO_FLOW.md
+```
