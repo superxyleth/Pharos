@@ -6,6 +6,15 @@
 
 本项目不广播链上交易，不执行真实买卖，不触碰用户资产。当前提交目标是提供一个可复用、可验证、可组合的 Phase 1 Skill 模块。
 
+## Hackathon Submission
+
+- 黑客松阶段：Pharos Skill-to-Agent Dual Cascade Hackathon Phase 1
+- 提交类型：标准化 MCP Skill
+- 目标网络：Pharos Atlantic Testnet
+- 链 ID：`688689`
+- 核心能力：策略生成、策略校验、多周期回测、模拟执行、策略产物导出、Pharos RPC/钱包只读检查
+- 安全边界：Phase 1 不包含 live trading，不广播交易，不执行链上写入
+
 ## 项目定位
 
 Phase 1 的目标是沉淀可复用 Skill。本项目聚焦一个完整但边界清晰的量化策略闭环：
