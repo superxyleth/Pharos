@@ -89,7 +89,7 @@ export function registerLoopTools(server: McpServer) {
           artifact,
           liveTrading: {
             enabled: false,
-            note: 'Phase 1 Skill does not broadcast transactions. Phase 2 Agent can compose this artifact with explicit user-confirmed execution tools.',
+            note: 'Phase 1 Skill does not broadcast transactions, execute live trades, or perform on-chain writes.',
           },
         });
       } catch (error) {

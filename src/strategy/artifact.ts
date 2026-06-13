@@ -29,7 +29,7 @@ export function exportStrategyArtifact(params: {
       totalTrades: result.totalTrades,
     })),
     riskNotice: [
-      'This artifact is for strategy research and agent composition.',
+      'This artifact is for Phase 1 strategy research, backtesting, and simulation.',
       'It does not authorize live trading.',
       'Any on-chain write operation must require explicit user confirmation.',
     ],

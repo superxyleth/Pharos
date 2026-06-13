@@ -175,7 +175,7 @@ export function registerStrategyTools(server: McpServer) {
   server.registerTool(
     'strategy_export_artifact',
     {
-      description: 'Export a reusable strategy artifact for Phase 2 Agent composition or marketplace publishing preparation.',
+      description: 'Export a reusable Phase 1 strategy artifact with code, validation, backtest summary, risk notes, and usage contract.',
       inputSchema: {
         name: z.string().min(1).describe('Artifact name.'),
         description: z.string().min(1).describe('Strategy description.'),
