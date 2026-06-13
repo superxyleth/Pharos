@@ -1,14 +1,15 @@
 # Pharos Quant Strategy Lifecycle Skill 当前进度
 
-更新时间：2026-06-13
+更新时间：2026-06-13 23:50 CST
 
 ## 项目定位
 
-本项目是面向 DoraHacks Pharos Phase 1 / Skill-to-Agent Dual Cascade Hackathon 的 MCP Skill 项目。
+本项目是面向 DoraHacks Pharos Phase 1 / Skill-to-Agent Dual Cascade Hackathon 的 Pharos-compatible Skill package + MCP service runtime。
 
 当前只聚焦 Phase 1：
 
 - 标准化、可复用的 MCP Skill
+- 官方 Skill Engine 风格的 `SKILL.md` + `references/` + `assets/`
 - 面向 Pharos Atlantic Testnet
 - 提供量化策略生命周期能力
 - 不做实盘交易
@@ -26,6 +27,10 @@
 GitHub 仓库：
 
 `git@github.com:superxyleth/Pharos.git`
+
+当前仓库是否公开：
+
+用户暂未公开 GitHub 仓库。功能测试优先通过公网 MCP endpoint 进行。
 
 服务器部署路径：
 
@@ -96,6 +101,31 @@ memory-push.cmd "本次推送说明"
 示例环境变量：
 
 `.env.example`
+
+Skill package 入口：
+
+`SKILL.md`
+
+重要文档：
+
+- `references/overview.md`
+- `references/mcp-tools.md`
+- `references/agent-workflows.md`
+- `references/input-output-contracts.md`
+- `references/pharos-network.md`
+- `references/safety-and-phase1-boundary.md`
+- `references/evaluation-guide.md`
+- `references/future-phase2-execution.md`
+- `docs/DEMO_FLOW.md`
+- `docs/ARCHITECTURE.md`
+- `docs/PHAROS_HACKATHON_REQUIREMENTS.md`
+- `examples/evaluator-prompt.md`
+
+公开元信息：
+
+- `assets/networks.json`
+- `assets/tokens.json`
+- `assets/mcp-endpoints.json`
 
 ## 环境变量
 
@@ -173,6 +203,14 @@ RPC：
 
 Phase 1 明确不做 live trading。
 
+当前已优化的 Agent 串联能力：
+
+- `strategy_backtest_matrix` compact 输出保留 `trades: []`、`equityCurve: []`、`detailMode: "compact"`。
+- compact backtest result 已包含 `winRateBasis`、`realizedPnl`、`unrealizedPnl`、`openPositionValue`、`openPositionCost`、`exposurePct`。
+- `strategy_advise.results` 可直接接收完整 matrix object。
+- `strategy_export_artifact.backtests` 可直接接收完整 matrix object。
+- `strategy_export_artifact` 支持 `includeCode=false`，返回轻量 artifact：`artifactId`、`codeHash`、`detailMode: "summary"`。
+
 ## 本地已完成
 
 已经完成的迁移和整理：
@@ -189,16 +227,21 @@ Phase 1 明确不做 live trading。
 - 已接入 Pharos RPC / 钱包读取
 - 已通过本地测试
 - 已通过服务器部署测试
+- 已新增 Pharos-compatible Skill package 结构：`SKILL.md`、`references/`、`assets/`
+- 已新增官方评测员风格测试提示词：`examples/evaluator-prompt.md`
+- 已新增 Demo Flow：`docs/DEMO_FLOW.md`
+- 已新增架构图文档：`docs/ARCHITECTURE.md`
+- README 已强化 Phase 1 安全边界、Pharos 网络配置、Phase 2 artifact 复用叙事
 
 当前本地 Git 状态在最后一次检查时是干净的。
 
 最近已知提交：
 
-`8e9b6e2`
+`fee715b`
 
 最近已知 tag：
 
-`memory/20260613-185918-remove-phase-2-wording-from-runtime-outp`
+`memory/20260613-222146-strengthen-hackathon-demo-docs-and-phase`
 
 ## 服务器部署状态
 
@@ -235,6 +278,14 @@ npm 已安装：
 `10.8.2`
 
 3011 端口安全组已经放行，公网访问已经验证通过。
+
+部署方式备注：
+
+- 服务器部署目录当前不是 Git 仓库，直接 `git pull` 会报 `fatal: not a git repository`。
+- 最近一次部署使用 Python `paramiko` + SFTP，从本地上传当前 Git 跟踪文件到 `/opt/projects/pharos-quant-strategy-lifecycle-skill`。
+- 部署时没有删除服务器文件，只覆盖上传 Git 跟踪文件。
+- 服务器 sudo 重启服务使用用户提供的 `ubuntu` 密码完成。
+- 如后续希望直接 `git pull`，需要将服务器部署目录初始化/恢复为 Git 仓库，或继续使用 SFTP 覆盖上传方式。
 
 ## 已验证结果
 
@@ -300,6 +351,42 @@ Pharos smoke test 已确认：
 - 钱包地址可从 PRIVATE_KEY 派生
 - PHRS 余额可读取
 
+最新公网 MCP 复测通过：
+
+```json
+{
+  "ok": true,
+  "toolCount": 10,
+  "chainId": 688689,
+  "compactDetailMode": "compact",
+  "hasWinRateBasis": true,
+  "adviceOk": true,
+  "artifactMode": "summary",
+  "quantLoopPeriods": 7,
+  "liveTradingEnabled": false
+}
+```
+
+最新已验证能力：
+
+- `health` 公网可访问。
+- `tools/list` 返回 10 个工具。
+- `pharos_network_status` 返回 `chainId = 688689`。
+- `strategy_backtest_matrix includeDetails=false` 返回 compact schema。
+- 完整 matrix object 可直接传给 `strategy_advise.results`。
+- 完整 matrix object 可直接传给 `strategy_export_artifact.backtests`。
+- `strategy_export_artifact includeCode=false` 返回 summary artifact。
+- `quant_loop_run` 返回 7 周期闭环结果。
+- `liveTrading.enabled = false`。
+
+部署时 `npm install` 提示：
+
+```text
+2 moderate severity vulnerabilities
+```
+
+当前不影响运行，后续可单独评估依赖升级。
+
 ## OpenClaw Agent 配置
 
 OpenClaw Agent 可使用 MCP 地址：
@@ -315,6 +402,10 @@ OpenClaw Agent 可使用 MCP 地址：
 1. `pharos_network_status`
 2. `strategy_backtest_matrix`
 3. `quant_loop_run`
+
+官方评测员风格测试提示词：
+
+`examples/evaluator-prompt.md`
 
 测试提示词可以让 Agent 执行类似任务：
 
@@ -375,8 +466,8 @@ npm run test:openai
 
 1. 用 OpenClaw Agent 真实连接公网 MCP 地址测试完整闭环。
 2. 保存 Agent 调用结果，作为黑客松演示材料。
-3. 检查 README 是否需要补充部署后的公网 MCP URL。
-4. 如果 README 或 docs 有改动，使用 `memory-push.cmd "说明"` 推送。
+3. 保存一份 Agent 官方评测员视角的 Markdown 报告。
+4. 如需继续更新 README 或 docs，使用 `memory-push.cmd "说明"` 推送。
 
 可选增强：
 
@@ -384,18 +475,21 @@ npm run test:openai
 2. 增加演示截图或调用录屏。
 3. 增加一份 DoraHacks 提交用摘要。
 4. 增加一个 `demo` 示例，展示从策略生成到 artifact 导出的完整 JSON-RPC 请求。
+5. 评估是否将服务器部署目录恢复成 Git 仓库，方便后续直接 `git pull`。
 
 ## 新页面接力提示
 
 如果重新打开一个 Codex 页面，可以把下面这段直接发给它：
 
 ```text
-当前项目是 D:\Hackathons\0 PHAROS 下的 Pharos Quant Strategy Lifecycle MCP Skill。
-这是 DoraHacks Pharos Phase 1 项目，只做 MCP Skill，不做实盘交易。
+当前项目是 D:\Hackathons\0 PHAROS 下的 Pharos Quant Strategy Lifecycle Skill。
+这是 DoraHacks Pharos Phase 1 项目，定位为 Pharos-compatible Skill package + MCP service runtime，不做实盘交易。
 服务器已部署到 /opt/projects/pharos-quant-strategy-lifecycle-skill。
 公网 MCP 地址是 http://150.158.28.155:3011/mcp。
-服务名是 pharos-quant-skill.service，3011 端口已放行，公网 health 和 tools/list 已验证通过。
-请先阅读 SKILL.md、references/overview.md、references/safety-and-phase1-boundary.md、docs/CURRENT_PROGRESS.md、README.md、package.json、src/server.ts，再继续工作。
+服务名是 pharos-quant-skill.service，3011 端口已放行，公网 health、tools/list、quant_loop_run、matrix -> advise、matrix -> artifact、includeCode=false 均已验证通过。
+最近提交是 fee715b，tag 是 memory/20260613-222146-strengthen-hackathon-demo-docs-and-phase。
+请先阅读 SKILL.md、references/overview.md、references/safety-and-phase1-boundary.md、references/input-output-contracts.md、docs/CURRENT_PROGRESS.md、docs/DEMO_FLOW.md、docs/ARCHITECTURE.md、README.md、package.json、src/server.ts，再继续工作。
 Pharos 官方文档也要作为开发前参考：https://docs.pharosnetwork.xyz/
+服务器部署目录当前不是 Git 仓库；最近一次部署用 paramiko/SFTP 上传 Git 跟踪文件，然后 npm install、npm run typecheck、sudo systemctl restart pharos-quant-skill.service。
 注意不要批量删除文件，不要提交 .env/.ssh/.tools/.codex/.gitconfig，推送必须用 memory-push.cmd "说明"。
 ```
