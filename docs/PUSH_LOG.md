@@ -142,3 +142,24 @@ M scripts/smoke-backtest.mjs
 ?? docs/CURRENT_PROGRESS.md
 ?? docs/PHAROS_HACKATHON_REQUIREMENTS.md
 ```
+
+### 20260613-221124 align project with pharos skill package format
+
+- Branch: `main`
+- Previous HEAD: `160a703`
+- Memory tag: `memory/20260613-221124-align-project-with-pharos-skill-package-`
+- Executed:
+  - Updated `docs/PUSH_LOG.md`
+  - Staged current tracked and untracked safe files
+  - Created a Git commit
+  - Created an annotated memory tag
+  - Pushed branch and tags to `origin`
+- Workspace changes before push:
+```text
+M README.md
+ M docs/CURRENT_PROGRESS.md
+?? SKILL.md
+?? assets/
+?? examples/evaluator-prompt.md
+?? references/
+```

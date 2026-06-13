@@ -395,7 +395,7 @@ npm run test:openai
 服务器已部署到 /opt/projects/pharos-quant-strategy-lifecycle-skill。
 公网 MCP 地址是 http://150.158.28.155:3011/mcp。
 服务名是 pharos-quant-skill.service，3011 端口已放行，公网 health 和 tools/list 已验证通过。
-请先阅读 docs/CURRENT_PROGRESS.md、README.md、package.json、src/server.ts，再继续工作。
+请先阅读 SKILL.md、references/overview.md、references/safety-and-phase1-boundary.md、docs/CURRENT_PROGRESS.md、README.md、package.json、src/server.ts，再继续工作。
 Pharos 官方文档也要作为开发前参考：https://docs.pharosnetwork.xyz/
 注意不要批量删除文件，不要提交 .env/.ssh/.tools/.codex/.gitconfig，推送必须用 memory-push.cmd "说明"。
 ```

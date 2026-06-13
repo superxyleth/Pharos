@@ -1,19 +1,31 @@
 # Pharos Quant Strategy Lifecycle Skill
 
-面向 Pharos Skill-to-Agent Dual Cascade Hackathon Phase 1 的量化策略生命周期 MCP Skill。
+面向 Pharos Skill-to-Agent Dual Cascade Hackathon Phase 1 的 Pharos-compatible Skill package + MCP service runtime。
 
 本项目提供一个标准化、可复用的 Skill 模块，帮助 Agent 将自然语言交易想法转成可执行策略代码，并完成沙箱校验、多周期回测、AI 优化建议、模拟执行、策略产物导出，以及 Pharos Atlantic 测试网 RPC/钱包只读检查。
+
+项目同时提供两层 Agent 接入方式：
+
+- Skill package：`SKILL.md`、`references/`、`assets/`，方便 Agent 按官方 Skill Engine 风格读取说明、能力索引、输入输出契约和安全边界。
+- MCP runtime：HTTP MCP endpoint，方便 Agent 通过 `tools/list` 和 `tools/call` 发现并执行工具。
 
 本项目不广播链上交易，不执行真实买卖，不触碰用户资产。当前提交目标是提供一个可复用、可验证、可组合的 Phase 1 Skill 模块。
 
 ## Hackathon Submission
 
 - 黑客松阶段：Pharos Skill-to-Agent Dual Cascade Hackathon Phase 1
-- 提交类型：标准化 MCP Skill
+- 提交类型：Pharos-compatible Skill package + MCP Skill runtime
 - 目标网络：Pharos Atlantic Testnet
 - 链 ID：`688689`
 - 核心能力：策略生成、策略校验、多周期回测、模拟执行、策略产物导出、Pharos RPC/钱包只读检查
 - 安全边界：Phase 1 不包含 live trading，不广播交易，不执行链上写入
+- 官方技术文档：https://docs.pharosnetwork.xyz/
+
+推荐英文定位：
+
+```text
+A Pharos-compatible MCP Skill that exposes a reusable quant strategy lifecycle to AI Agents.
+```
 
 ## 项目定位
 
@@ -27,6 +39,43 @@ Phase 1 的目标是沉淀可复用 Skill。本项目聚焦一个完整但边界
 6. 进行模拟执行，不发送链上交易
 7. 导出标准化策略产物
 8. 检查 Pharos Atlantic RPC、链 ID、区块高度和本地钱包余额
+
+## Skill Package 结构
+
+本项目新增了官方 Skill Engine 风格的文件包结构：
+
+```text
+SKILL.md
+references/
+  overview.md
+  mcp-tools.md
+  agent-workflows.md
+  input-output-contracts.md
+  pharos-network.md
+  safety-and-phase1-boundary.md
+  evaluation-guide.md
+  future-phase2-execution.md
+assets/
+  networks.json
+  tokens.json
+  mcp-endpoints.json
+```
+
+Agent 推荐阅读顺序：
+
+1. `SKILL.md`
+2. `references/overview.md`
+3. `references/safety-and-phase1-boundary.md`
+4. `references/mcp-tools.md`
+5. `references/agent-workflows.md`
+6. `references/input-output-contracts.md`
+7. 连接 MCP endpoint 并调用 `tools/list`
+
+官方评测员风格测试提示词：
+
+```text
+examples/evaluator-prompt.md
+```
 
 ## MCP 工具
 
@@ -89,10 +138,22 @@ MCP 端点：
 http://localhost:3001/mcp
 ```
 
+公网 MCP 端点：
+
+```text
+http://150.158.28.155:3011/mcp
+```
+
 健康检查：
 
 ```text
 http://localhost:3001/health
+```
+
+公网健康检查：
+
+```text
+http://150.158.28.155:3011/health
 ```
 
 ## 示例调用
@@ -106,6 +167,12 @@ node scripts/mcp-call.mjs examples/strategy-generate.json
 node scripts/mcp-call.mjs examples/strategy-backtest.json
 node scripts/mcp-call.mjs examples/strategy-backtest-matrix.json
 node scripts/mcp-call.mjs examples/quant-loop-run.json
+```
+
+官方评测员风格 Prompt：
+
+```bash
+type examples\evaluator-prompt.md
 ```
 
 ## 测试
@@ -189,6 +256,12 @@ exports.evaluate = function(ctx) {
 - Explorer：`https://atlantic.pharosscan.xyz/`
 
 当前项目只执行只读 RPC 检查，不发起转账、部署或合约写入。
+
+更多公开网络与资产元信息见：
+
+- `assets/networks.json`
+- `assets/tokens.json`
+- `assets/mcp-endpoints.json`
 
 ## Phase 1 提交重点
 

@@ -1,0 +1,18 @@
+{
+  "service": "pharos-quant-strategy-lifecycle-skill",
+  "phase": "phase1-skill",
+  "public": {
+    "mcp": "http://150.158.28.155:3011/mcp",
+    "health": "http://150.158.28.155:3011/health"
+  },
+  "local": {
+    "mcp": "http://localhost:3001/mcp",
+    "health": "http://localhost:3001/health"
+  },
+  "safety": {
+    "liveTradingEnabled": false,
+    "transactionBroadcastEnabled": false,
+    "onChainWritesEnabled": false
+  }
+}
+
