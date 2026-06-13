@@ -7,6 +7,7 @@ import { runBacktest, runBacktestMatrix } from '../strategy/backtest.js';
 import { deterministicStrategyTemplate, generateStrategyCode } from '../strategy/generation.js';
 import { createSampleCandles } from '../strategy/sampleData.js';
 import { simulateStrategy } from '../strategy/simulator.js';
+import type { BacktestResult } from '../strategy/types.js';
 import { validateStrategyCode } from '../strategy/validate.js';
 
 const candleSchema = z.object({
@@ -27,12 +28,29 @@ const backtestResultSchema = z.object({
   finalEquity: z.number(),
   totalReturnPct: z.number(),
   winRatePct: z.number(),
+  winRateBasis: z.string().optional(),
   maxDrawdownPct: z.number(),
   sharpeRatio: z.number(),
   totalTrades: z.number(),
-  trades: z.array(z.any()),
-  equityCurve: z.array(z.any()),
+  realizedPnl: z.number().optional(),
+  unrealizedPnl: z.number().optional(),
+  openPositionValue: z.number().optional(),
+  openPositionCost: z.number().optional(),
+  exposurePct: z.number().optional(),
+  trades: z.array(z.any()).optional(),
+  equityCurve: z.array(z.any()).optional(),
 });
+
+const backtestMatrixSchema = z.object({
+  success: z.literal(true),
+  periods: z.array(backtestResultSchema).optional(),
+  results: z.array(backtestResultSchema).optional(),
+});
+
+const backtestInputSchema = z.union([
+  z.array(backtestResultSchema).min(1),
+  backtestMatrixSchema,
+]);
 
 export function registerStrategyTools(server: McpServer) {
   server.registerTool(
@@ -134,13 +152,13 @@ export function registerStrategyTools(server: McpServer) {
       description: 'Review strategy code and backtest results, then provide risk-aware optimization advice.',
       inputSchema: {
         code: z.string().min(1).describe('Strategy code under review.'),
-        results: z.array(backtestResultSchema).min(1).describe('Backtest results returned by strategy_backtest or strategy_backtest_matrix.'),
+        results: backtestInputSchema.describe('Backtest result array, or the full object returned by strategy_backtest_matrix.'),
         question: z.string().optional().describe('Specific reviewer question.'),
       },
     },
     async ({ code, results, question }) => {
       try {
-        return textResult(await adviseStrategy({ code, results, question }));
+        return textResult(await adviseStrategy({ code, results: normalizeBacktestResults(results), question }));
       } catch (error) {
         return errorResult(error instanceof Error ? error.message : String(error));
       }
@@ -182,14 +200,23 @@ export function registerStrategyTools(server: McpServer) {
         code: z.string().min(1).describe('Strategy code.'),
         symbol: z.string().optional().describe('Target symbol.'),
         chain: z.string().optional().describe('Target chain.'),
-        backtests: z.array(backtestResultSchema).optional().describe('Optional backtest results to embed in the artifact.'),
+        backtests: backtestInputSchema.optional().describe('Optional backtest array, or the full object returned by strategy_backtest_matrix.'),
+        includeCode: z.boolean().optional().describe('When false, return artifactId and codeHash without embedding full strategy code. Defaults to true.'),
       },
     },
-    async ({ name, description, code, symbol, chain, backtests }) => {
+    async ({ name, description, code, symbol, chain, backtests, includeCode = true }) => {
       try {
         return textResult({
           success: true,
-          artifact: exportStrategyArtifact({ name, description, code, symbol, chain, backtests }),
+          artifact: exportStrategyArtifact({
+            name,
+            description,
+            code,
+            symbol,
+            chain,
+            backtests: normalizeBacktestResults(backtests),
+            includeCode,
+          }),
         });
       } catch (error) {
         return errorResult(error instanceof Error ? error.message : String(error));
@@ -208,10 +235,45 @@ function summarizeBacktest(result: ReturnType<typeof runBacktest>) {
     finalEquity: result.finalEquity,
     totalReturnPct: result.totalReturnPct,
     winRatePct: result.winRatePct,
+    winRateBasis: result.winRateBasis,
     maxDrawdownPct: result.maxDrawdownPct,
     sharpeRatio: result.sharpeRatio,
     totalTrades: result.totalTrades,
+    realizedPnl: result.realizedPnl,
+    unrealizedPnl: result.unrealizedPnl,
+    openPositionValue: result.openPositionValue,
+    openPositionCost: result.openPositionCost,
+    exposurePct: result.exposurePct,
+    trades: [],
+    equityCurve: [],
+    detailMode: 'compact',
     sampleTrades: result.trades.slice(0, 5),
     lastTrade: result.trades.at(-1),
+  };
+}
+
+type BacktestInput = z.infer<typeof backtestInputSchema>;
+type ParsedBacktestResult = z.infer<typeof backtestResultSchema>;
+
+function normalizeBacktestResults(input: BacktestInput | undefined): BacktestResult[] {
+  if (!input) return [];
+  const rawResults = Array.isArray(input) ? input : input.results ?? input.periods ?? [];
+  if (rawResults.length === 0) {
+    throw new Error('At least one backtest result is required. Pass an array or a strategy_backtest_matrix object with periods/results.');
+  }
+  return rawResults.map(toBacktestResult);
+}
+
+function toBacktestResult(result: ParsedBacktestResult): BacktestResult {
+  return {
+    ...result,
+    winRateBasis: result.winRateBasis ?? 'Closed SELL trades with positive realized PnL only; unrealized PnL is reflected in finalEquity, drawdown, and open position fields.',
+    realizedPnl: result.realizedPnl ?? 0,
+    unrealizedPnl: result.unrealizedPnl ?? 0,
+    openPositionValue: result.openPositionValue ?? 0,
+    openPositionCost: result.openPositionCost ?? 0,
+    exposurePct: result.exposurePct ?? 0,
+    trades: result.trades ?? [],
+    equityCurve: result.equityCurve ?? [],
   };
 }

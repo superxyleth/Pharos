@@ -11,6 +11,9 @@ for (const result of results) {
   if (!Number.isFinite(result.totalReturnPct)) {
     throw new Error(`Invalid return for ${result.period}`);
   }
+  if (!result.winRateBasis || !Number.isFinite(result.unrealizedPnl) || !Number.isFinite(result.exposurePct)) {
+    throw new Error(`Missing risk/exposure fields for ${result.period}`);
+  }
 }
 
 console.log(JSON.stringify({

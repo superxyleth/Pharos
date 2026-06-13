@@ -10,9 +10,13 @@ export async function adviseStrategy(params: {
     period: result.period,
     totalReturnPct: result.totalReturnPct,
     winRatePct: result.winRatePct,
+    winRateBasis: result.winRateBasis,
     maxDrawdownPct: result.maxDrawdownPct,
     sharpeRatio: result.sharpeRatio,
     totalTrades: result.totalTrades,
+    realizedPnl: result.realizedPnl,
+    unrealizedPnl: result.unrealizedPnl,
+    exposurePct: result.exposurePct,
   }));
   const prompt = [
     'Review this strategy and backtest summary for a Pharos quant strategy Skill.',

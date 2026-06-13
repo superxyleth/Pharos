@@ -55,9 +55,15 @@ export interface BacktestResult {
   finalEquity: number;
   totalReturnPct: number;
   winRatePct: number;
+  winRateBasis: string;
   maxDrawdownPct: number;
   sharpeRatio: number;
   totalTrades: number;
+  realizedPnl: number;
+  unrealizedPnl: number;
+  openPositionValue: number;
+  openPositionCost: number;
+  exposurePct: number;
   trades: Trade[];
   equityCurve: Array<{ time: number; equity: number; drawdownPct: number }>;
 }

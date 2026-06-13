@@ -90,6 +90,9 @@ export function runBacktest(params: {
 
   const finalPrice = candles[candles.length - 1].close;
   const finalEquity = position.quoteBalance + position.baseAmount * finalPrice;
+  const openPositionValue = position.baseAmount * finalPrice;
+  const openPositionCost = position.avgEntryPrice * position.baseAmount;
+  const unrealizedPnl = openPositionValue - openPositionCost;
   const drawdown = maxDrawdownPct(equityValues);
   const equityCurve = equityValues.map((equity, index) => ({
     time: equityTimes[index],
@@ -106,9 +109,15 @@ export function runBacktest(params: {
     finalEquity: roundMetric(finalEquity),
     totalReturnPct: roundMetric(totalReturnPct(initialCapital, finalEquity)),
     winRatePct: roundMetric(winRatePct(trades)),
+    winRateBasis: 'Closed SELL trades with positive realized PnL only; unrealized PnL is reflected in finalEquity, drawdown, and open position fields.',
     maxDrawdownPct: roundMetric(drawdown.maxDrawdownPct),
     sharpeRatio: roundMetric(sharpeRatio(equityValues)),
     totalTrades: trades.length,
+    realizedPnl: roundMetric(position.realizedPnl),
+    unrealizedPnl: roundMetric(unrealizedPnl),
+    openPositionValue: roundMetric(openPositionValue),
+    openPositionCost: roundMetric(openPositionCost),
+    exposurePct: roundMetric(finalEquity > 0 ? (openPositionValue / finalEquity) * 100 : 0),
     trades,
     equityCurve,
   };
