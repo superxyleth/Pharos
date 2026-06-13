@@ -1,0 +1,14 @@
+{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "method": "tools/call",
+  "params": {
+    "name": "strategy_backtest",
+    "arguments": {
+      "code": "var TOTAL_CAPITAL_U = 1000; var BUY_AMOUNT_U = 50; exports.evaluate = function(ctx) { if (ctx.index % 24 === 0 && ctx.position.quoteBalance >= BUY_AMOUNT_U) return { action: 'BUY', amountUsd: BUY_AMOUNT_U, reason: 'scheduled buy' }; if (ctx.position.avgEntryPrice > 0 && ctx.candle.close > ctx.position.avgEntryPrice * 1.02) return { action: 'SELL', fraction: 1, reason: 'take profit' }; return { action: 'HOLD', reason: 'wait' }; };",
+      "symbol": "PHRS",
+      "period": "1Y",
+      "initialCapital": 1000
+    }
+  }
+}

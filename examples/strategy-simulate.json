@@ -1,0 +1,12 @@
+{
+  "jsonrpc": "2.0",
+  "id": 4,
+  "method": "tools/call",
+  "params": {
+    "name": "strategy_simulate",
+    "arguments": {
+      "code": "exports.evaluate = function(ctx) { return { action: ctx.index === 0 ? 'BUY' : 'HOLD', amountUsd: 10, reason: 'simulation example' }; };",
+      "initialCapital": 100
+    }
+  }
+}

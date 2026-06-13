@@ -1,0 +1,15 @@
+{
+  "jsonrpc": "2.0",
+  "id": 5,
+  "method": "tools/call",
+  "params": {
+    "name": "quant_loop_run",
+    "arguments": {
+      "description": "Use 0.5U total capital. Buy 0.05U every hour, up to 10 buys, then sell all when price is 2% above average entry.",
+      "symbol": "PHRS",
+      "chain": "pharos-atlantic-testnet",
+      "initialCapital": 0.5,
+      "useOpenAI": true
+    }
+  }
+}

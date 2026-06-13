@@ -1,0 +1,31 @@
+{
+  "name": "pharos-quant-strategy-lifecycle-skill",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Reusable MCP Skill for Pharos quant strategy generation, backtesting, simulation, and wallet/RPC readiness checks.",
+  "scripts": {
+    "dev": "tsx src/server.ts",
+    "mcp": "tsx src/server.ts",
+    "typecheck": "tsc --noEmit",
+    "test:openai": "tsx scripts/smoke-openai.mjs",
+    "test:pharos": "tsx scripts/smoke-pharos.mjs",
+    "test:backtest": "tsx scripts/smoke-backtest.mjs",
+    "test:mcp": "tsx scripts/smoke-mcp.mjs",
+    "test": "npm run typecheck && npm run test:backtest && npm run test:pharos"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "dotenv": "^17.4.2",
+    "ethers": "^6.16.0",
+    "express": "^5.2.1",
+    "openai": "^6.27.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^20.19.26",
+    "tsx": "^4.22.3",
+    "typescript": "^5.9.3"
+  }
+}
