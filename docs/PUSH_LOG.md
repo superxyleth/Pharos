@@ -53,3 +53,19 @@ AM scripts/memory-push.mjs
 ?? src/
 ?? tsconfig.json
 ```
+
+### 20260613-183751 rewrite readme in chinese for pharos skill
+
+- Branch: `main`
+- Previous HEAD: `303be46`
+- Memory tag: `memory/20260613-183751-rewrite-readme-in-chinese-for-pharos-ski`
+- Executed:
+  - Updated `docs/PUSH_LOG.md`
+  - Staged current tracked and untracked safe files
+  - Created a Git commit
+  - Created an annotated memory tag
+  - Pushed branch and tags to `origin`
+- Workspace changes before push:
+```text
+M README.md
+```

@@ -1,80 +1,129 @@
 # Pharos Quant Strategy Lifecycle Skill
 
-Reusable Phase 1 MCP Skill for the Pharos Skill-to-Agent Dual Cascade Hackathon.
+面向 Pharos Skill-to-Agent Dual Cascade Hackathon Phase 1 的量化策略生命周期 MCP Skill。
 
-This project extracts the highest-value loop from the original ChainAlpha Quant project, excluding the cemetery purchase module and app-specific UI/payment code. The Skill turns natural-language strategy ideas into sandboxed executable JavaScript, validates the strategy, runs single and multi-period backtests, provides optimization advice, simulates decisions, exports a reusable strategy artifact, and checks Pharos Atlantic RPC/wallet readiness.
+本项目提供一个标准化、可复用的 Skill 模块，帮助 Agent 将自然语言交易想法转成可执行策略代码，并完成沙箱校验、多周期回测、AI 优化建议、模拟执行、策略产物导出，以及 Pharos Atlantic 测试网 RPC/钱包只读检查。
 
-## Why This Skill
+本项目当前阶段不广播链上交易，不执行真实买卖，不触碰用户资产。真实链上执行应在 Phase 2 中由独立执行 Skill 或 Agent 组合，并在用户明确确认后进行。
 
-The original project's strongest capability is the quant strategy lifecycle:
+## 项目定位
 
-1. Natural-language strategy generation
-2. Sandboxed strategy execution
-3. Backtest metrics
-4. Multi-period validation
-5. AI strategy advice
-6. Mock simulation
-7. Artifact export for later Agent composition
+Phase 1 的目标是沉淀可复用 Skill。本项目聚焦一个完整但边界清晰的量化策略闭环：
 
-Phase 1 focuses on a standardized reusable Skill. Phase 2 can compose this Skill with execution, data, marketplace, or payment Skills to build a full autonomous Pharos Agent.
+1. 用户输入自然语言策略需求
+2. 生成符合沙箱规范的 JavaScript 策略代码
+3. 校验策略代码安全性
+4. 执行单周期或多周期回测
+5. 根据回测结果给出策略优化建议
+6. 进行模拟执行，不发送链上交易
+7. 导出可供 Phase 2 Agent 组合使用的策略产物
+8. 检查 Pharos Atlantic RPC、链 ID、区块高度和本地钱包余额
 
-## MCP Tools
+## MCP 工具
 
-- `pharos_network_status` - check Pharos Atlantic RPC, chain ID `688689`, and block height.
-- `pharos_wallet_info` - derive the local `.env` wallet address and PHRS balance without exposing `PRIVATE_KEY`.
-- `strategy_generate` - generate sandbox-compatible JavaScript strategy code.
-- `strategy_validate` - check `exports.evaluate(ctx)` and block unsafe APIs.
-- `strategy_backtest` - run one backtest period.
-- `strategy_backtest_matrix` - run `1D`, `1W`, `1M`, `6M`, `1Y`, `2Y`, `3Y`.
-- `strategy_advise` - review code and backtest results.
-- `strategy_simulate` - evaluate decisions without broadcasting transactions.
-- `strategy_export_artifact` - package code, metrics, and risk notes for Phase 2.
-- `quant_loop_run` - run the full Phase 1 closed loop.
+- `pharos_network_status`：检查 Pharos Atlantic RPC、链 ID `688689`、当前区块高度。
+- `pharos_wallet_info`：从本地 `.env` 的 `PRIVATE_KEY` 派生钱包地址，并查询 PHRS 余额；不会返回私钥。
+- `strategy_generate`：根据自然语言策略需求生成沙箱可执行策略代码。
+- `strategy_validate`：校验策略代码是否符合 `exports.evaluate(ctx)` 规范，并拦截危险 API。
+- `strategy_backtest`：执行单周期回测，返回收益率、胜率、最大回撤、Sharpe、交易次数等指标。
+- `strategy_backtest_matrix`：执行 `1D`、`1W`、`1M`、`6M`、`1Y`、`2Y`、`3Y` 多周期回测。
+- `strategy_advise`：根据策略代码和回测结果给出风险提示与优化建议。
+- `strategy_simulate`：基于样例行情或外部传入行情进行模拟决策，不广播交易。
+- `strategy_export_artifact`：导出策略代码、参数、回测摘要、风险说明和使用规范。
+- `quant_loop_run`：一键执行 Phase 1 闭环：生成、校验、回测、建议、模拟、导出。
 
-No tool broadcasts transactions. Live trading is intentionally left for Phase 2 Agent composition with explicit user confirmation.
+## 环境变量
 
-## Setup
+复制示例配置：
 
 ```bash
 copy .env.example .env
-# Fill OPENAI_API_KEY, optional OPENAI_BASE_URL/OPENAI_MODEL, and optional PRIVATE_KEY.
-npm install
-npm run typecheck
 ```
 
-The default Pharos network is Atlantic testnet:
+需要配置：
 
-- RPC: `https://atlantic.dplabs-internal.com`
-- Chain ID: `688689`
-- Native token: `PHRS`
-- Explorer: `https://atlantic.pharosscan.xyz/`
+```env
+OPENAI_API_KEY=replace_with_openai_api_key
+OPENAI_BASE_URL=https://api.openai.com/v1
+OPENAI_MODEL=gpt-4o-mini
 
-## Run
+PHAROS_RPC_URL=https://atlantic.dplabs-internal.com
+PHAROS_CHAIN_ID=688689
+
+PRIVATE_KEY=0xreplace_with_private_key
+PORT=3001
+```
+
+说明：
+
+- `OPENAI_BASE_URL` 支持 OpenAI 兼容中转服务。
+- `PRIVATE_KEY` 只用于本地派生地址和查询余额，不会被工具返回。
+- 未配置 `PRIVATE_KEY` 时，策略生成、回测、模拟等功能仍可使用，钱包检查会提示未配置。
+
+## 安装与启动
 
 ```bash
+npm install
+npm run typecheck
 npm run mcp
 ```
 
-Then call:
+默认服务地址：
+
+```text
+http://localhost:3001
+```
+
+MCP 端点：
+
+```text
+http://localhost:3001/mcp
+```
+
+健康检查：
+
+```text
+http://localhost:3001/health
+```
+
+## 示例调用
+
+启动 MCP 服务后，在另一个终端执行：
 
 ```bash
 node scripts/mcp-call.mjs examples/pharos-network-status.json
+node scripts/mcp-call.mjs examples/pharos-wallet-info.json
+node scripts/mcp-call.mjs examples/strategy-generate.json
+node scripts/mcp-call.mjs examples/strategy-backtest.json
+node scripts/mcp-call.mjs examples/strategy-backtest-matrix.json
 node scripts/mcp-call.mjs examples/quant-loop-run.json
 ```
 
-## Smoke Tests
+## 测试
 
 ```bash
 npm run test:backtest
 npm run test:pharos
 npm run test:openai
+npm run test:mcp
 ```
 
-`test:openai` requires a working OpenAI-compatible endpoint. `test:pharos` works with the default RPC and includes wallet info only when `PRIVATE_KEY` is configured.
+也可以运行聚合测试：
 
-## Strategy Contract
+```bash
+npm test
+```
 
-Strategies must define:
+测试说明：
+
+- `test:backtest` 会运行多周期回测 smoke test。
+- `test:pharos` 会检查 Pharos Atlantic RPC，并在配置 `PRIVATE_KEY` 时查询钱包余额。
+- `test:openai` 会验证 OpenAI 兼容接口是否可用。
+- `test:mcp` 需要先启动 `npm run mcp`，用于验证 MCP `tools/list`。
+
+## 策略代码规范
+
+策略必须定义：
 
 ```js
 exports.evaluate = function(ctx) {
@@ -82,60 +131,65 @@ exports.evaluate = function(ctx) {
 };
 ```
 
-`ctx` contains:
+`ctx` 包含：
 
-- `candle`
-- `candles`
-- `index`
-- `state`
-- `position`
-- `initialCapital`
-- `equity`
+- `candle`：当前 K 线
+- `candles`：截至当前的历史 K 线
+- `index`：当前 K 线索引
+- `state`：策略状态
+- `position`：模拟持仓状态
+- `initialCapital`：初始资金
+- `equity`：当前权益
 
-Expected return:
+策略返回值示例：
 
 ```js
 {
-  action: 'BUY' | 'SELL' | 'HOLD',
+  action: 'BUY',
   amountUsd: 10,
   fraction: 1,
-  reason: 'plain explanation',
-  statePatch: {}
+  reason: 'scheduled buy',
+  statePatch: { lastBuyIndex: ctx.index }
 }
 ```
 
-Blocked APIs include `require`, `import`, `process`, `fs`, `child_process`, `eval`, `Function`, and network access.
+支持动作：
 
-## Migration Scope
+- `BUY`
+- `SELL`
+- `HOLD`
 
-Included from the previous project conceptually:
+禁止在策略代码中使用：
 
-- strategy generation
-- sandbox validation
-- backtest engine
-- metrics
-- strategy advice
-- paper/mock simulation idea
-- MCP tool schema style
+- `require`
+- `import`
+- `process`
+- `fs`
+- `child_process`
+- `eval`
+- `Function`
+- 网络请求
 
-Excluded:
+## Pharos 网络
 
-- cemetery purchase module
-- Next.js frontend
-- OKX x402 gateway
-- OnchainOS wallet login
-- production strategy marketplace database
-- live swap execution
-- `.data`, `.next`, `node_modules`, and backup files
+默认网络为 Pharos Atlantic Testnet：
 
-## Phase 2 Path
+- RPC：`https://atlantic.dplabs-internal.com`
+- Chain ID：`688689`
+- Native Token：`PHRS`
+- Explorer：`https://atlantic.pharosscan.xyz/`
 
-This Skill can later be composed into a full Pharos Agent that:
+当前项目只执行只读 RPC 检查，不发起转账、部署或合约写入。
 
-1. Receives a user objective
-2. Generates and validates a strategy
-3. Runs multi-period backtests
-4. Simulates the strategy
-5. Checks wallet and network readiness
-6. Requests explicit confirmation
-7. Calls a separate execution Skill for on-chain actions
+## Phase 2 扩展方向
+
+本 Skill 可以在 Phase 2 中组合成完整 Agent：
+
+1. 接收用户策略目标
+2. 调用本 Skill 生成和回测策略
+3. 调用数据 Skill 注入真实行情
+4. 调用风控 Skill 做实盘前检查
+5. 用户确认后调用执行 Skill 进行链上操作
+6. 持续监控策略表现并输出报告
+
+Phase 1 当前提交重点是：可复用、可验证、可组合的量化策略生命周期 Skill。
