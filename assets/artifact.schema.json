@@ -1,0 +1,157 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://superxyleth.github.io/Pharos/assets/artifact.schema.json",
+  "title": "Pharos Quant Skill Artifact",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "artifactId",
+    "name",
+    "description",
+    "target",
+    "codeHash",
+    "validation",
+    "detailMode",
+    "backtestSummary",
+    "safety",
+    "riskNotice",
+    "usage"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "pharos.quant.skill.artifact.v1"
+    },
+    "artifactId": {
+      "type": "string",
+      "minLength": 8
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "target": {
+      "type": "object",
+      "required": ["chain", "symbol"],
+      "properties": {
+        "chain": {
+          "type": "string",
+          "minLength": 1
+        },
+        "symbol": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": true
+    },
+    "codeHash": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "code": {
+      "type": "string"
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "detailMode": {
+      "type": "string",
+      "enum": ["full", "summary"]
+    },
+    "backtestSummary": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "period",
+          "timeframe",
+          "coverage",
+          "candleSource",
+          "candleCount",
+          "totalReturnPct",
+          "winRatePct",
+          "maxDrawdownPct",
+          "sharpeRatio",
+          "totalTrades",
+          "riskScore",
+          "stabilityScore",
+          "capitalEfficiencyScore",
+          "strategyQuality"
+        ],
+        "properties": {
+          "period": { "type": "string" },
+          "timeframe": { "type": "string" },
+          "coverage": { "type": "string" },
+          "candleSource": { "type": "string" },
+          "candleCount": { "type": "number" },
+          "totalReturnPct": { "type": "number" },
+          "winRatePct": { "type": "number" },
+          "maxDrawdownPct": { "type": "number" },
+          "sharpeRatio": { "type": "number" },
+          "totalTrades": { "type": "number" },
+          "noTradeReason": { "type": ["string", "null"] },
+          "tradeActivityScore": { "type": "number" },
+          "entrySignalCount": { "type": "number" },
+          "blockedSignalCount": { "type": "number" },
+          "riskScore": { "type": "number" },
+          "stabilityScore": { "type": "number" },
+          "capitalEfficiencyScore": { "type": "number" },
+          "strategyQuality": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "safety": {
+      "type": "object",
+      "required": [
+        "researchOnly",
+        "liveTrading",
+        "broadcastTransactions",
+        "onChainWrites",
+        "privateKeyExposure"
+      ],
+      "properties": {
+        "researchOnly": { "type": "boolean" },
+        "liveTrading": {
+          "type": "object",
+          "required": ["enabled"],
+          "properties": {
+            "enabled": { "type": "boolean" }
+          },
+          "additionalProperties": true
+        },
+        "broadcastTransactions": { "type": "boolean" },
+        "onChainWrites": { "type": "boolean" },
+        "privateKeyExposure": { "type": "boolean" }
+      },
+      "additionalProperties": true
+    },
+    "riskNotice": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "usage": {
+      "type": "object",
+      "required": ["evaluateSignature", "requiredContext", "expectedDecision"],
+      "properties": {
+        "evaluateSignature": { "type": "string" },
+        "requiredContext": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "expectedDecision": { "type": "string" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

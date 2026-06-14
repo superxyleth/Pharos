@@ -17,6 +17,9 @@ const requiredFiles = [
   'assets/networks.json',
   'assets/tokens.json',
   'assets/mcp-endpoints.json',
+  'assets/artifact.schema.json',
+  'docs/PHASE2_ARTIFACT_REUSE.md',
+  'examples/consume-artifact-example.json',
 ];
 
 const requiredTools = [
@@ -113,6 +116,24 @@ for (const section of ['## When To Use', '## When Not To Use', '## Capability In
 for (const tool of requiredTools) {
   assertCheck(skill.includes(tool), `SKILL.md lists tool: ${tool}`, 'tool not listed');
 }
+assertCheck(skill.includes('assets/artifact.schema.json'), 'SKILL.md lists artifact schema asset', 'artifact schema asset missing');
+
+const readme = await readText('README.md');
+assertCheck(readme.includes('## Judge Quick Test'), 'README has Judge Quick Test', 'judge quick path missing');
+assertCheck(readme.includes('Accept: application/json, text/event-stream'), 'README documents MCP Accept header', 'MCP Accept header missing');
+assertCheck(readme.includes('"useOpenAI": false'), 'README quick test uses deterministic path', 'useOpenAI=false missing from quick test');
+
+const demoJsonRpc = await readText('examples/demo-json-rpc-flow.md');
+assertCheck(demoJsonRpc.includes('Accept: application/json, text/event-stream'), 'JSON-RPC demo documents MCP Accept header', 'MCP Accept header missing');
+assertCheck(demoJsonRpc.includes('"useOpenAI": false'), 'JSON-RPC demo defaults to deterministic path', 'useOpenAI=false missing from demo');
+
+const phase2Reuse = await readText('docs/PHASE2_ARTIFACT_REUSE.md');
+assertCheck(phase2Reuse.includes('assets/artifact.schema.json'), 'Phase 2 reuse doc references artifact schema', 'artifact schema reference missing');
+assertCheck(phase2Reuse.includes('disabled by default'), 'Phase 2 reuse doc keeps execution disabled by default', 'execution guardrail missing');
+
+const consumeExample = await readJson('examples/consume-artifact-example.json');
+assertCheck(consumeExample.artifactRef?.schema === 'assets/artifact.schema.json', 'consume artifact example references schema', 'schema reference missing');
+assertCheck(Array.isArray(consumeExample.requiredChecks), 'consume artifact example has required checks', 'requiredChecks missing');
 
 const pharosNetwork = await readText('references/pharos-network.md');
 for (const expected of [
@@ -143,6 +164,14 @@ const endpoints = await readJson('assets/mcp-endpoints.json');
 assertCheck(endpoints.safety?.liveTradingEnabled === false, 'endpoint safety disables live trading', 'live trading should be false');
 assertCheck(endpoints.safety?.transactionBroadcastEnabled === false, 'endpoint safety disables transaction broadcast', 'broadcast should be false');
 assertCheck(endpoints.safety?.onChainWritesEnabled === false, 'endpoint safety disables on-chain writes', 'writes should be false');
+
+const artifactSchema = await readJson('assets/artifact.schema.json');
+assertCheck(artifactSchema.properties?.safety, 'artifact schema defines safety object', 'safety schema missing');
+const safetyRequired = artifactSchema.properties?.safety?.required ?? [];
+for (const field of ['researchOnly', 'liveTrading', 'broadcastTransactions', 'onChainWrites', 'privateKeyExposure']) {
+  assertCheck(safetyRequired.includes(field), `artifact schema requires safety.${field}`, `safety.${field} not required`);
+}
+assertCheck(artifactSchema.properties?.codeHash?.pattern === '^sha256:[a-f0-9]{64}$', 'artifact schema validates codeHash format', 'codeHash pattern missing');
 
 if (!offline) {
   const healthUrl = process.env.SKILL_VALIDATE_HEALTH_URL ?? endpoints.public?.health;

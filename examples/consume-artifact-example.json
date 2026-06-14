@@ -1,0 +1,36 @@
+{
+  "consumer": "future-pharos-phase2-agent",
+  "purpose": "Use a Phase 1 strategy artifact as research and risk-validation input before any separate execution planning.",
+  "artifactRef": {
+    "schemaVersion": "pharos.quant.skill.artifact.v1",
+    "artifactId": "pharos-example-artifact-id",
+    "codeHash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "schema": "assets/artifact.schema.json"
+  },
+  "requiredChecks": [
+    "Validate artifact against assets/artifact.schema.json",
+    "Confirm safety.researchOnly is true",
+    "Confirm safety.liveTrading.enabled is false",
+    "Confirm safety.broadcastTransactions is false",
+    "Confirm safety.onChainWrites is false",
+    "Confirm safety.privateKeyExposure is false",
+    "Review validation.errors and validation.warnings",
+    "Review backtestSummary riskScore, stabilityScore, capitalEfficiencyScore, noTradeReason, and tradeActivityScore",
+    "Verify codeHash if full code is available",
+    "Keep any transaction planning in a separate disabled-by-default execution Skill"
+  ],
+  "phase2DecisionTemplate": {
+    "eligibleForDryRunPlanning": false,
+    "reason": "Artifact is research-only until a separate execution Skill verifies chain, router, token, notional, slippage, and explicit user confirmation.",
+    "allowedNextStep": "dry-run-only execution planning",
+    "forbiddenActions": [
+      "live trading",
+      "transaction broadcast",
+      "swaps",
+      "approvals",
+      "transfers",
+      "contract writes",
+      "private key output"
+    ]
+  }
+}

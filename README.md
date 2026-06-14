@@ -2,6 +2,94 @@
 
 Pharos Quant Strategy Lifecycle Skill is a Phase 1 MCP Skill that lets AI Agents generate, validate, backtest, simulate, and export reusable PHRS strategy artifacts on Pharos Atlantic Testnet, with no live trading or transaction broadcasting.
 
+## Judge Quick Test
+
+Public repository:
+
+```text
+https://github.com/superxyleth/Pharos
+```
+
+Health endpoint:
+
+```text
+http://150.158.28.155:3011/health
+```
+
+MCP endpoint:
+
+```text
+http://150.158.28.155:3011/mcp
+```
+
+Required MCP Streamable HTTP headers:
+
+```http
+Content-Type: application/json
+Accept: application/json, text/event-stream
+```
+
+Quick health check:
+
+```bash
+curl http://150.158.28.155:3011/health
+```
+
+Tool discovery request:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/list"
+}
+```
+
+Network status request:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "method": "tools/call",
+  "params": {
+    "name": "pharos_network_status",
+    "arguments": {}
+  }
+}
+```
+
+One-call deterministic review path:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 3,
+  "method": "tools/call",
+  "params": {
+    "name": "quant_loop_run",
+    "arguments": {
+      "description": "Generate a PHRS grid and DCA research strategy with trend filter, volatility filter, risk-off exit, and max exposure control. Run full multi-period backtests, produce risk-aware advice, simulate decisions, and export a reusable artifact.",
+      "symbol": "PHRS",
+      "chain": "pharos-atlantic-testnet",
+      "initialCapital": 1000,
+      "useOpenAI": false
+    }
+  }
+}
+```
+
+Expected checks:
+
+- `tools/list` exposes 10 tools.
+- `pharos_network_status.chainId = 688689`.
+- `quant_loop_run` returns 7 backtest periods.
+- `executionModeSummary.providerTimeoutMs = 90000`.
+- `artifact.artifactId` and `artifact.codeHash` are present.
+- `liveTrading.enabled = false`.
+- `broadcastTransactions = false`.
+- `onChainWrites = false`.
+
 面向 Pharos Skill-to-Agent Dual Cascade Hackathon Phase 1 的 Pharos-compatible Skill package + MCP service runtime。
 
 本项目提供一个标准化、可复用的 Skill 模块，帮助 Agent 将自然语言交易想法转成可执行策略代码，并完成沙箱校验、多周期回测、AI 优化建议、模拟执行、策略产物导出，以及 Pharos Atlantic 测试网 RPC/钱包只读检查。
@@ -72,6 +160,7 @@ assets/
   networks.json
   tokens.json
   mcp-endpoints.json
+  artifact.schema.json
 ```
 
 Agent 推荐阅读顺序：
@@ -98,7 +187,9 @@ Demo 与架构文档：
 - `docs/SUBMISSION_CHECKLIST.md`
 - `docs/DEMO_TRANSCRIPT.md`
 - `docs/AGENT_EVALUATION_REPORT_2026-06-14.md`
+- `docs/PHASE2_ARTIFACT_REUSE.md`
 - `examples/demo-json-rpc-flow.md`
+- `examples/consume-artifact-example.json`
 
 ## MCP 工具
 
@@ -386,6 +477,7 @@ AI-backed generation / advice 可能耗时 60-90 秒，这是预期行为。该�
 - `assets/networks.json`
 - `assets/tokens.json`
 - `assets/mcp-endpoints.json`
+- `assets/artifact.schema.json`
 
 ## Phase 1 提交重点
 

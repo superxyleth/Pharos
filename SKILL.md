@@ -176,3 +176,4 @@ This Skill is safe-by-design for Phase 1:
 - `assets/networks.json`
 - `assets/tokens.json`
 - `assets/mcp-endpoints.json`
+- `assets/artifact.schema.json`

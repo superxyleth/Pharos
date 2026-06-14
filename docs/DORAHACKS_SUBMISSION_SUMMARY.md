@@ -21,11 +21,14 @@ The Skill package is organized for Agent-readable progressive disclosure:
 - `SKILL.md`: primary Skill entry point with trigger rules, capability index, execution loop, and safety boundary.
 - `references/`: task-specific reference files for overview, MCP tools, workflows, contracts, network, safety, and evaluation.
 - `assets/`: machine-readable network, token, and endpoint metadata.
+- `assets/artifact.schema.json`: machine-readable schema for exported strategy artifacts.
 - `src/`: MCP runtime and strategy lifecycle implementation.
 - `scripts/validate-skill.mjs`: submission self-check for local package structure and public MCP readiness.
 - `examples/demo-json-rpc-flow.md`: copy-ready JSON-RPC demo requests.
+- `examples/consume-artifact-example.json`: example Phase 2 artifact consumption plan.
 - `docs/DEMO_FLOW.md`: short reviewer demo flow.
 - `docs/DEMO_TRANSCRIPT.md`: latest public endpoint test transcript.
+- `docs/PHASE2_ARTIFACT_REUSE.md`: Phase 2 artifact reuse and safety boundary guide.
 - `docs/SUBMISSION_CHECKLIST.md`: final pre-submission checklist.
 
 ## Public Runtime
@@ -134,3 +137,5 @@ See `docs/DEMO_TRANSCRIPT.md` for the latest public endpoint transcript.
 ## Phase 2 Reuse Path
 
 Future Phase 2 Agents can consume exported strategy artifacts and combine them with wallet, oracle, DEX, or execution Skills under strict risk controls. Execution should remain a separate disabled-by-default module with Atlantic Testnet guards, max notional limits, slippage controls, dry-run transaction plans, and explicit confirmation.
+
+This Skill acts as the research and risk-validation layer for future Pharos Agents. Phase 2 Agents can consume exported artifacts and combine them with wallet, DEX, oracle, or execution Skills under strict guardrails.

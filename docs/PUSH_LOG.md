@@ -280,3 +280,25 @@ M .env.example
  M src/tools/loopTools.ts
  M src/tools/strategyTools.ts
 ```
+
+### 20260614-212511 add artifact schema and phase2 reuse docs
+
+- Branch: `main`
+- Previous HEAD: `f1b0992`
+- Memory tag: `memory/20260614-212511-add-artifact-schema-and-phase2-reuse-doc`
+- Executed:
+  - Updated `docs/PUSH_LOG.md`
+  - Staged current tracked and untracked safe files
+  - Created a Git commit
+  - Created an annotated memory tag
+  - Pushed branch and tags to `origin`
+- Workspace changes before push:
+```text
+M README.md
+ M SKILL.md
+ M docs/DORAHACKS_SUBMISSION_SUMMARY.md
+ M scripts/validate-skill.mjs
+?? assets/artifact.schema.json
+?? docs/PHASE2_ARTIFACT_REUSE.md
+?? examples/consume-artifact-example.json
+```
