@@ -248,3 +248,35 @@ M .env.example
 ?? src/strategy/indicators.ts
 ?? src/strategy/quality.ts
 ```
+
+### 20260614-210741 polish agent evaluation feedback handling
+
+- Branch: `main`
+- Previous HEAD: `ea0156b`
+- Memory tag: `memory/20260614-210741-polish-agent-evaluation-feedback-handlin`
+- Executed:
+  - Updated `docs/PUSH_LOG.md`
+  - Staged current tracked and untracked safe files
+  - Created a Git commit
+  - Created an annotated memory tag
+  - Pushed branch and tags to `origin`
+- Workspace changes before push:
+```text
+M .env.example
+ M README.md
+ M SKILL.md
+ M docs/AGENT_EVALUATION_REPORT_2026-06-14.md
+ M docs/DEMO_FLOW.md
+ M docs/DEMO_TRANSCRIPT.md
+ M docs/DORAHACKS_SUBMISSION_SUMMARY.md
+ M references/input-output-contracts.md
+ M references/mcp-tools.md
+ M src/config.ts
+ M src/strategy/advisor.ts
+ M src/strategy/artifact.ts
+ M src/strategy/backtest.ts
+ M src/strategy/generation.ts
+ M src/strategy/types.ts
+ M src/tools/loopTools.ts
+ M src/tools/strategyTools.ts
+```

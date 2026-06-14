@@ -127,7 +127,7 @@ copy .env.example .env
 OPENAI_API_KEY=replace_with_openai_api_key
 OPENAI_BASE_URL=https://api.openai.com/v1
 OPENAI_MODEL=gpt-4o-mini
-OPENAI_TIMEOUT_MS=30000
+OPENAI_TIMEOUT_MS=90000
 
 PHAROS_RPC_URL=https://atlantic.dplabs-internal.com
 PHAROS_CHAIN_ID=688689
@@ -139,7 +139,7 @@ PORT=3001
 说明：
 
 - `OPENAI_BASE_URL` 支持 OpenAI 兼容中转服务。
-- `OPENAI_TIMEOUT_MS` 用于避免模型调用无限阻塞；AI 生成和建议以策略质量、风险审查为优先，耗时较长是可接受的，超时后工具会走可控 fallback。
+- `OPENAI_TIMEOUT_MS` 用于避免模型调用无限阻塞；默认建议为 `90000`。AI 生成和建议以策略质量、风险审查为优先，耗时较长是可接受的，超时后工具会走可控 fallback。
 - `PRIVATE_KEY` 只用于本地派生地址和查询余额，不会被工具返回。
 - 未配置 `PRIVATE_KEY` 时，策略生成、回测、模拟等功能仍可使用，钱包检查会提示未配置。
 
@@ -184,6 +184,15 @@ http://150.158.28.155:3011/health
 ## 示例调用
 
 启动 MCP 服务后，在另一个终端执行：
+
+MCP Streamable HTTP clients should include these headers:
+
+```http
+Content-Type: application/json
+Accept: application/json, text/event-stream
+```
+
+Missing the `Accept` header may return `406 Not Acceptable`.
 
 ```bash
 node scripts/mcp-call.mjs examples/pharos-network-status.json
@@ -315,6 +324,10 @@ exports.evaluate = function(ctx) {
 
 - `startTime` / `endTime`
 - `dataQuality`
+- `noTradeReason`
+- `tradeActivityScore`
+- `entrySignalCount`
+- `blockedSignalCount`
 - `riskScore`
 - `stabilityScore`
 - `capitalEfficiencyScore`

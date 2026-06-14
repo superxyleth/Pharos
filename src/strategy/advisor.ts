@@ -21,6 +21,10 @@ export async function adviseStrategy(params: {
     realizedPnl: result.realizedPnl,
     unrealizedPnl: result.unrealizedPnl,
     exposurePct: result.exposurePct,
+    noTradeReason: result.noTradeReason,
+    tradeActivityScore: result.tradeActivityScore,
+    entrySignalCount: result.entrySignalCount,
+    blockedSignalCount: result.blockedSignalCount,
     riskScore: result.riskScore,
     stabilityScore: result.stabilityScore,
     capitalEfficiencyScore: result.capitalEfficiencyScore,
@@ -55,10 +59,19 @@ export async function adviseStrategy(params: {
 function fallbackAdvice(results: BacktestResult[], error: unknown): string {
   const best = [...results].sort((a, b) => b.totalReturnPct - a.totalReturnPct)[0];
   const worstDrawdown = [...results].sort((a, b) => a.maxDrawdownPct - b.maxDrawdownPct)[0];
+  const zeroTradeResults = results.filter((result) => result.totalTrades === 0);
+  const zeroTradeDiagnostic = zeroTradeResults.length
+    ? [
+      `${zeroTradeResults.length}/${results.length} periods produced 0 trades.`,
+      ...zeroTradeResults.slice(0, 3).map((result) => `${result.period}: ${result.noTradeReason ?? 'No executable entry signal was observed.'}`),
+      'If this persists, loosen entry thresholds gradually, add a small warmup probe entry, or verify that the supplied candles contain enough trend/volatility movement.',
+    ].join(' ')
+    : '';
   return [
     'OpenAI advice was unavailable, so this deterministic review was generated.',
     best ? `Best period by return: ${best.period} (${best.totalReturnPct}%).` : '',
     worstDrawdown ? `Largest drawdown observed: ${worstDrawdown.period} (${worstDrawdown.maxDrawdownPct}%).` : '',
+    zeroTradeDiagnostic,
     'Before any live operation, prefer mock simulation, cap single-trade size, and require explicit user confirmation.',
     `Provider error: ${error instanceof Error ? error.message : String(error)}`,
   ].filter(Boolean).join(' ');

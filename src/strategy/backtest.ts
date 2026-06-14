@@ -1,4 +1,4 @@
-import type { BacktestResult, Candle, PositionState, StrategyContext, Trade } from './types.js';
+import type { BacktestResult, Candle, PositionState, StrategyContext, StrategyQuality, Trade } from './types.js';
 import { compileStrategy, normalizeDecision } from './sandbox.js';
 import { createSampleCandles, intervalForPeriod } from './sampleData.js';
 import type { PeriodInterval } from './sampleData.js';
@@ -41,6 +41,9 @@ export function runBacktest(params: {
   const trades: Trade[] = [];
   const equityValues: number[] = [];
   const equityTimes: number[] = [];
+  let entrySignalCount = 0;
+  let exitSignalCount = 0;
+  let blockedSignalCount = 0;
 
   for (let index = 0; index < candles.length; index += 1) {
     const candle = candles[index];
@@ -59,6 +62,13 @@ export function runBacktest(params: {
     const decision = normalizeDecision(evaluator(ctx));
     if (decision.statePatch) Object.assign(state, decision.statePatch);
 
+    if (decision.action === 'BUY') {
+      entrySignalCount += 1;
+    }
+    if (decision.action === 'SELL') {
+      exitSignalCount += 1;
+    }
+
     if (decision.action === 'BUY' && position.quoteBalance > 0) {
       const requested = decision.amountUsd ?? (decision.fraction ? equity * decision.fraction : position.quoteBalance * 0.25);
       const spend = Math.max(0, Math.min(requested, position.quoteBalance));
@@ -71,7 +81,11 @@ export function runBacktest(params: {
         position.avgEntryPrice = (previousCost + spend) / (position.baseAmount + baseAmount);
         position.baseAmount += baseAmount;
         trades.push(makeTrade(index, candle.time, 'BUY', executionPrice, spend, baseAmount, decision.reason, position, price));
+      } else {
+        blockedSignalCount += 1;
       }
+    } else if (decision.action === 'BUY') {
+      blockedSignalCount += 1;
     }
 
     if (decision.action === 'SELL' && position.baseAmount > 0) {
@@ -89,6 +103,8 @@ export function runBacktest(params: {
         position.avgEntryPrice = 0;
       }
       trades.push(makeTrade(index, candle.time, 'SELL', executionPrice, proceeds - costBasis, baseAmount, decision.reason, position, price));
+    } else if (decision.action === 'SELL') {
+      blockedSignalCount += 1;
     }
 
     equityValues.push(position.quoteBalance + position.baseAmount * price);
@@ -105,6 +121,14 @@ export function runBacktest(params: {
   const drawdownPct = roundMetric(drawdown.maxDrawdownPct);
   const sharpe = roundMetric(sharpeRatio(equityValues));
   const exposurePct = roundMetric(finalEquity > 0 ? (openPositionValue / finalEquity) * 100 : 0);
+  const noTradeReason = explainNoTrades({
+    totalTrades: trades.length,
+    entrySignalCount,
+    exitSignalCount,
+    blockedSignalCount,
+    strategyQuality,
+  });
+  const tradeActivityScore = scoreTradeActivity({ totalTrades: trades.length, candleCount: candles.length });
   const equityCurve = equityValues.map((equity, index) => ({
     time: equityTimes[index],
     equity: roundMetric(equity),
@@ -135,6 +159,10 @@ export function runBacktest(params: {
     openPositionValue: roundMetric(openPositionValue),
     openPositionCost: roundMetric(openPositionCost),
     exposurePct,
+    noTradeReason,
+    tradeActivityScore,
+    entrySignalCount,
+    blockedSignalCount,
     riskScore: scoreRisk({ maxDrawdownPct: drawdownPct, exposurePct, strategyQuality }),
     stabilityScore: scoreStability({ sharpeRatio: sharpe, maxDrawdownPct: drawdownPct, totalTrades: trades.length }),
     capitalEfficiencyScore: scoreCapitalEfficiency({ totalReturnPct: returnPct, exposurePct, totalTrades: trades.length }),
@@ -307,6 +335,39 @@ function hasFullTargetCoverage(candles: Candle[], interval: PeriodInterval): boo
 function expectedCandleCount(startTime: number, endTime: number, stepMs: number): number {
   if (!startTime || !endTime || endTime < startTime || stepMs <= 0) return 0;
   return Math.floor((endTime - startTime) / stepMs) + 1;
+}
+
+function scoreTradeActivity(params: { totalTrades: number; candleCount: number }): number {
+  if (params.totalTrades <= 0 || params.candleCount <= 0) return 0;
+  return Math.min(100, roundMetric((params.totalTrades / params.candleCount) * 250));
+}
+
+function explainNoTrades(params: {
+  totalTrades: number;
+  entrySignalCount: number;
+  exitSignalCount: number;
+  blockedSignalCount: number;
+  strategyQuality: StrategyQuality;
+}): string | null {
+  if (params.totalTrades > 0) return null;
+  if (params.entrySignalCount === 0 && params.exitSignalCount === 0) {
+    const strictFilters = [
+      params.strategyQuality.hasTrendFilter ? 'trend filter' : '',
+      params.strategyQuality.hasVolatilityFilter ? 'volatility filter' : '',
+      params.strategyQuality.hasExposureLimit ? 'exposure limit' : '',
+      params.strategyQuality.hasStopLossOrRiskOff ? 'risk-off logic' : '',
+    ].filter(Boolean);
+    return strictFilters.length
+      ? `No executable trades: the strategy emitted only HOLD decisions. Entry conditions may be too strict for this sample path because it uses ${strictFilters.join(', ')}.`
+      : 'No executable trades: the strategy emitted only HOLD decisions and did not produce entry signals for this sample path.';
+  }
+  if (params.entrySignalCount > 0 && params.blockedSignalCount > 0) {
+    return 'No executable trades: entry signals were emitted but blocked by quote balance, zero spend, exposure, or execution constraints.';
+  }
+  if (params.exitSignalCount > 0 && params.entrySignalCount === 0) {
+    return 'No executable trades: exit signals were emitted without an open position, and no entry signal occurred first.';
+  }
+  return 'No executable trades: strategy signals did not pass sandbox execution constraints for this data span.';
 }
 
 function inferInitialCapital(code: string): number | null {

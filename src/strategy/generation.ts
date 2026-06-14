@@ -51,15 +51,16 @@ export async function generateStrategyCode(params: {
 export function deterministicStrategyTemplate(description: string): string {
   return `// Generated fallback strategy: ${description.replace(/\s+/g, ' ').slice(0, 120)}
 var TOTAL_CAPITAL_U = 1000;
-var BASE_BUY_AMOUNT_U = 35;
-var MAX_BUY_COUNT = 8;
-var TAKE_PROFIT_PCT = 0.025;
+var BASE_BUY_AMOUNT_U = 30;
+var MAX_BUY_COUNT = 10;
+var TAKE_PROFIT_PCT = 0.018;
 var STOP_LOSS_PCT = 0.08;
-var RSI_BUY_BELOW = 42;
+var RSI_BUY_BELOW = 55;
 var RSI_RISK_OFF_ABOVE = 72;
-var MAX_EXPOSURE_PCT = 0.5;
-var COOLDOWN_BARS = 3;
-var ATR_RISK_PCT = 0.035;
+var MAX_EXPOSURE_PCT = 0.45;
+var COOLDOWN_BARS = 6;
+var ATR_RISK_PCT = 0.04;
+var PROBE_ENTRY_AFTER_BARS = 20;
 
 exports.evaluate = function(ctx) {
   var state = ctx.state || {};
@@ -78,6 +79,8 @@ exports.evaluate = function(ctx) {
   var volatilityPct = price > 0 ? atr14 / price : 0;
   var volatilityOk = volatilityPct <= ATR_RISK_PCT;
   var cooledDown = ctx.index - lastBuyIndex >= COOLDOWN_BARS;
+  var firstProbeOk = buys === 0 && ctx.index >= PROBE_ENTRY_AFTER_BARS && price >= ema50 * 0.98;
+  var entrySignal = rsi14 <= RSI_BUY_BELOW || firstProbeOk;
 
   if (ctx.position.baseAmount > 0 && avg > 0 && (price <= avg * (1 - STOP_LOSS_PCT) || (!trendOk && rsi14 >= RSI_RISK_OFF_ABOVE))) {
     return {
@@ -105,14 +108,16 @@ exports.evaluate = function(ctx) {
     trendOk &&
     volatilityOk &&
     !riskMode &&
-    rsi14 <= RSI_BUY_BELOW
+    entrySignal
   ) {
     var volatilityScale = Math.max(0.35, 1 - volatilityPct / ATR_RISK_PCT);
     var amountUsd = Math.min(BASE_BUY_AMOUNT_U * volatilityScale, ctx.position.quoteBalance);
     return {
       action: 'BUY',
       amountUsd: amountUsd,
-      reason: 'Risk-controlled DCA buy using precomputed RSI, EMA trend, ATR volatility, cooldown, and exposure guard.',
+      reason: firstProbeOk && rsi14 > RSI_BUY_BELOW
+        ? 'Small research probe buy after warmup using EMA trend, ATR volatility, cooldown, and exposure guard.'
+        : 'Risk-controlled DCA buy using precomputed RSI, EMA trend, ATR volatility, cooldown, and exposure guard.',
       statePatch: { buys: buys + 1, lastBuyIndex: ctx.index }
     };
   }

@@ -81,6 +81,17 @@ Local development:
 http://localhost:3001/mcp
 ```
 
+## MCP HTTP Headers
+
+This endpoint uses MCP Streamable HTTP. JSON-RPC clients should send:
+
+```http
+Content-Type: application/json
+Accept: application/json, text/event-stream
+```
+
+Requests that omit `Accept: application/json, text/event-stream` may receive `406 Not Acceptable`.
+
 ## Capability Index
 
 | Agent need | MCP tool | Reference |

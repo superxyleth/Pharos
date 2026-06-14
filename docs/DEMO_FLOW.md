@@ -60,6 +60,15 @@ http://150.158.28.155:3011/health
 
 ### 3. Tool Discovery
 
+Use MCP Streamable HTTP headers:
+
+```http
+Content-Type: application/json
+Accept: application/json, text/event-stream
+```
+
+If the `Accept` header is missing, the server may return `406 Not Acceptable`.
+
 Call:
 
 ```json

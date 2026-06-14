@@ -29,6 +29,10 @@ A backtest result contains:
 - `openPositionValue`
 - `openPositionCost`
 - `exposurePct`
+- `noTradeReason`
+- `tradeActivityScore`
+- `entrySignalCount`
+- `blockedSignalCount`
 - `riskScore`
 - `stabilityScore`
 - `capitalEfficiencyScore`
@@ -41,6 +45,10 @@ Compact mode returns `trades: []` and `equityCurve: []` to keep responses small 
 Backtests use full-period adaptive-timeframe coverage. Longer periods use larger candle intervals to preserve the full time span without pretending that a small partial sample represents the whole period.
 
 Backtests prioritize correctness, coverage transparency, and risk diagnostics over minimum latency. A negative return is a valid diagnostic result and should be interpreted as risk discovery, not tool failure.
+
+`0 trades` is also a valid diagnostic result. When it happens, the result includes `noTradeReason`, `entrySignalCount`, and `blockedSignalCount` so Agents can explain whether the strategy emitted only `HOLD`, produced blocked entry signals, or tried to exit without an open position.
+
+`tradeActivityScore` is a relative activity score derived from trades per candle. It helps reviewers compare whether a strategy is silent, sparse, or active; it is not a performance score and does not imply profitability.
 
 Default matrix resolution:
 

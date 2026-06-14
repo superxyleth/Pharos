@@ -99,6 +99,10 @@ export interface BacktestResult {
   openPositionValue: number;
   openPositionCost: number;
   exposurePct: number;
+  noTradeReason: string | null;
+  tradeActivityScore: number;
+  entrySignalCount: number;
+  blockedSignalCount: number;
   riskScore: number;
   stabilityScore: number;
   capitalEfficiencyScore: number;

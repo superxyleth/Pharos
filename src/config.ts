@@ -31,7 +31,7 @@ export function getConfig(): AppConfig {
     openaiApiKey: process.env.OPENAI_API_KEY?.trim(),
     openaiBaseUrl: process.env.OPENAI_BASE_URL?.trim(),
     openaiModel: process.env.OPENAI_MODEL?.trim() || 'gpt-4o-mini',
-    openaiTimeoutMs: readNumber('OPENAI_TIMEOUT_MS', 30_000),
+    openaiTimeoutMs: readNumber('OPENAI_TIMEOUT_MS', 90_000),
     pharosRpcUrl: process.env.PHAROS_RPC_URL?.trim() || 'https://atlantic.dplabs-internal.com',
     pharosChainId: readNumber('PHAROS_CHAIN_ID', 688689),
     privateKey: normalizePrivateKey(process.env.PRIVATE_KEY),

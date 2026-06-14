@@ -76,9 +76,10 @@ This Skill provides a complete research lifecycle that an Agent can compose:
 2. Validate the code against the `exports.evaluate(ctx)` contract and blocked API list.
 3. Run full-period adaptive-timeframe backtests across `1D`, `1W`, `1M`, `6M`, `1Y`, `2Y`, and `3Y`.
 4. Return coverage, timeframe, data quality, risk, stability, capital efficiency, and strategy quality diagnostics.
-5. Produce risk-aware improvement advice.
-6. Simulate decisions without execution.
-7. Export a reusable artifact with `artifactId`, `codeHash`, summary metrics, and fixed Phase 1 safety flags.
+5. Return trade activity diagnostics, including no-trade explanations, entry signal counts, and blocked signal counts.
+6. Produce risk-aware improvement advice.
+7. Simulate decisions without execution.
+8. Export a reusable artifact with `artifactId`, `codeHash`, summary metrics, and fixed Phase 1 safety flags.
 
 ## Phase 1 Safety Boundary
 

@@ -159,6 +159,15 @@ Returned all 7 periods:
 
 The compact period outputs include timeframe, coverage, data quality, and strategy quality diagnostics.
 
+The current fallback/demo strategy now produces non-zero trade activity across all 7 default periods. Results include:
+
+- `noTradeReason`
+- `tradeActivityScore`
+- `entrySignalCount`
+- `blockedSignalCount`
+
+These fields help reviewers distinguish a silent strategy from a failed tool call.
+
 ### Artifact Export
 
 `strategy_export_artifact` with `includeCode=false` passed.
@@ -190,7 +199,7 @@ Observed:
 - artifact export completed
 - `liveTrading.enabled = false`
 
-The latest public deterministic run completed in about 30 seconds. Most of the time was spent in the advice stage, which is acceptable for a reviewer-quality research loop.
+The latest public deterministic run completed in about 35 seconds. AI generation timeout is configured at `90000ms`; deterministic fallback remains available if a model-backed stage is unavailable.
 
 ## Local Test Results
 
@@ -217,6 +226,7 @@ Observed:
 - Pharos Atlantic Testnet readiness check works and returns chain ID `688689`.
 - Strategy sandbox validation blocks dangerous APIs.
 - Backtest matrix covers all required periods with transparent timeframe and coverage metadata.
+- Backtest results include trade activity diagnostics and no-trade explanations.
 - Backtest results include data quality, risk, stability, capital efficiency, and strategy quality diagnostics.
 - `includeCode=false` provides a reviewer-friendly lightweight artifact.
 - Public wallet info uses privacy-safe defaults.
@@ -225,7 +235,7 @@ Observed:
 ## Remaining Risks
 
 - A public repository link is still required for final DoraHacks submission.
-- AI-backed generation and advice can take longer than deterministic smoke paths; reviewer docs should clearly distinguish the quality evaluation path from the fast smoke path.
+- AI-backed generation and advice can take longer than deterministic smoke paths; reviewer docs distinguish the quality evaluation path from the fast smoke path.
 - Backtest sample data is deterministic research data unless an external data Skill supplies candles. This is documented, but reviewers should not interpret sample-data results as exchange-grade historical performance.
 - MCP responses may use SSE framing. Simple JSON-RPC clients should use the provided examples or an MCP-compatible client.
 

@@ -64,6 +64,16 @@ Backtest outputs also include `timeframe`, `coverage`, and `candleSource` so Age
 
 They also include `startTime`, `endTime`, `dataQuality`, `riskScore`, `stabilityScore`, `capitalEfficiencyScore`, and `strategyQuality`. These fields make long-running or negative-return backtests easier to interpret as diagnostics rather than failures.
 
+Trade activity diagnostics include:
+
+- `noTradeReason`
+- `tradeActivityScore`
+- `entrySignalCount`
+- `blockedSignalCount`
+
+These fields help Agents explain `0 trades` results without treating them as tool failures.
+`tradeActivityScore` is a simple relative activity signal, not a profit metric.
+
 ## `strategy_backtest_matrix`
 
 Runs the standard matrix:

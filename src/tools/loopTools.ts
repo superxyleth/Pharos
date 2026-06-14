@@ -44,7 +44,8 @@ export function registerLoopTools(server: McpServer) {
           const code = deterministicStrategyTemplate(description);
           generated = {
             success: true as const,
-            fallback: true,
+            fallback: false,
+            deterministic: true,
             code,
             validation: validateStrategyCode(code),
           };
@@ -54,6 +55,7 @@ export function registerLoopTools(server: McpServer) {
           status: 'completed',
           mode: useOpenAI ? 'ai-with-fallback' : 'deterministic',
           fallback: 'fallback' in generated ? Boolean(generated.fallback) : false,
+          providerError: 'providerError' in generated ? generated.providerError : undefined,
           durationMs: Date.now() - generateStarted,
         });
 
@@ -140,12 +142,28 @@ export function registerLoopTools(server: McpServer) {
             maxDrawdownPct: result.maxDrawdownPct,
             sharpeRatio: result.sharpeRatio,
             totalTrades: result.totalTrades,
+            noTradeReason: result.noTradeReason,
+            tradeActivityScore: result.tradeActivityScore,
+            entrySignalCount: result.entrySignalCount,
+            blockedSignalCount: result.blockedSignalCount,
             riskScore: result.riskScore,
             stabilityScore: result.stabilityScore,
             capitalEfficiencyScore: result.capitalEfficiencyScore,
             strategyQuality: result.strategyQuality,
           })),
           advice,
+          executionModeSummary: {
+            generationMode: useOpenAI ? 'ai-with-fallback' : 'deterministic',
+            generationUsedFallback: 'fallback' in generated ? Boolean(generated.fallback) : false,
+            adviceMode: advice.fallback ? 'deterministic-fallback' : 'ai-backed',
+            adviceUsedFallback: Boolean(advice.fallback),
+            providerTimeoutMs: Number(process.env.OPENAI_TIMEOUT_MS ?? 90000),
+            qualityNote: advice.fallback || ('fallback' in generated && generated.fallback)
+              ? 'One or more AI-backed stages used deterministic fallback. The Phase 1 loop still completed and returned research diagnostics.'
+              : useOpenAI
+                ? 'AI-backed generation and advice completed without deterministic fallback.'
+                : 'Deterministic generation completed; AI-backed advice completed without fallback.',
+          },
           simulation,
           artifact,
           liveTrading: {

@@ -2,7 +2,7 @@
 
 Latest public endpoint smoke transcript for Pharos Phase 1 review.
 
-Test time: 2026-06-14 19:04 CST.
+Test time: 2026-06-14 20:18 CST.
 
 ## Endpoint
 
@@ -134,27 +134,37 @@ Observed:
 - artifact export stage completed
 - `liveTrading.enabled = false`
 
-Artifact:
+Execution mode:
 
 ```json
 {
-  "artifactId": "pharos-40a7df15b5b99c0a",
-  "codeHash": "sha256:039a189b4213680cce5d26e4a5af26bb5d5f3a90974b482ff2e021c91bfff904"
+  "generationMode": "deterministic",
+  "generationUsedFallback": false,
+  "adviceMode": "ai-backed",
+  "adviceUsedFallback": false,
+  "providerTimeoutMs": 90000,
+  "qualityNote": "Deterministic generation completed; AI-backed advice completed without fallback."
 }
 ```
 
-Step durations:
+First period summary:
 
-| Step | Status | Duration |
-| --- | --- | --- |
-| generate | completed | 0 ms |
-| validate | completed | 0 ms |
-| backtest_matrix | completed | 53 ms |
-| advise | completed | 30001 ms |
-| simulate | completed | 1 ms |
-| export_artifact | completed | 1 ms |
+```json
+{
+  "period": "1D",
+  "timeframe": "5m",
+  "coverage": "full-period",
+  "candleCount": 288,
+  "totalReturnPct": 0.1795,
+  "totalTrades": 39,
+  "noTradeReason": null,
+  "tradeActivityScore": 33.8542,
+  "entrySignalCount": 21,
+  "blockedSignalCount": 0
+}
+```
 
-Total latency: about 30 seconds.
+Total latency: about 35 seconds.
 
 ## 6. Backtest Matrix And Lightweight Artifact
 
@@ -170,7 +180,8 @@ Backtest matrix:
 ```json
 {
   "periods": ["1D", "1W", "1M", "6M", "1Y", "2Y", "3Y"],
-  "fieldsPresent": true
+  "fieldsPresent": true,
+  "tradeDiagnosticsPresent": true
 }
 ```
 
