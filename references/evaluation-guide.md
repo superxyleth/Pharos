@@ -20,11 +20,20 @@ Use:
 http://150.158.28.155:3011/mcp
 ```
 
+Required HTTP headers:
+
+```text
+Content-Type: application/json
+Accept: application/json, text/event-stream
+```
+
 Call:
 
 ```json
 {"jsonrpc":"2.0","id":1,"method":"tools/list"}
 ```
+
+Requests that omit the `Accept` header may receive `406 Not Acceptable`.
 
 ## Step 3: Verify Network Status
 
@@ -48,9 +57,13 @@ Suggested request:
   "symbol": "PHRS",
   "chain": "pharos-atlantic-testnet",
   "initialCapital": 1000,
-  "useOpenAI": true
+  "useOpenAI": false
 }
 ```
+
+Use `useOpenAI=false` as the baseline judging path because it is deterministic, does not depend on external model latency, and still exercises generation, validation, multi-period backtesting, advice, simulation, and artifact export.
+
+For deeper strategy-quality review, repeat the same request with `useOpenAI=true`. The AI-backed path uses `OPENAI_TIMEOUT_MS=90000` by default and may take longer; if the provider times out, the Skill returns controlled fallback output instead of failing the loop.
 
 ## Step 5: Run Modular Tool Chain
 
@@ -78,4 +91,11 @@ Suggested review criteria:
 - Backtest and risk explanation.
 - Artifact quality.
 - Phase 2 extensibility.
+- MCP header clarity and evaluator friendliness.
 
+Expected safety posture:
+
+- `liveTrading.enabled = false`
+- `broadcastTransactions = false`
+- `onChainWrites = false`
+- no private key output

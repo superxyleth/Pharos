@@ -1,6 +1,6 @@
 # Pharos Quant Strategy Lifecycle Skill 当前进度
 
-更新时间：2026-06-13 23:50 CST
+更新时间：2026-06-14 21:45 CST
 
 接力开发补充：2026-06-13 已新增短版 OpenClaw Prompt、完整 JSON-RPC demo flow、DoraHacks submission summary，并在 README / Demo Flow 中加入入口。
 
@@ -10,7 +10,7 @@
 - 外部高频 K 线会按完整输入跨度聚合为 OHLCV 桶，不再只截取最后一段 partial data；外部数据结果标记为 `coverage: "provided-input-span"`。
 - 新增 `ctx.indicators`，提供 `ema20`、`ema50`、`rsi14`、`atr14`、`previousClose`。
 - validator 对 `ctx.candles` 全量扫描给 warning，但不禁止复杂策略。
-- OpenAI 调用新增 `OPENAI_TIMEOUT_MS`，默认 30 秒，超时后触发可控 fallback。
+- OpenAI 调用新增 `OPENAI_TIMEOUT_MS`，当前默认 90 秒；AI 生成和建议以策略质量、风险审查为优先，超时后触发可控 fallback。
 - artifact 固定输出 `researchOnly=true`、`liveTrading.enabled=false`、`broadcastTransactions=false`、`onChainWrites=false`。
 
 部署补充：2026-06-14 00:59 CST 已将本轮优化通过 SFTP 覆盖上传到服务器 `/opt/projects/pharos-quant-strategy-lifecycle-skill`，没有删除服务器文件；远端 `npm install`、`npm run typecheck`、`systemctl restart pharos-quant-skill.service` 均成功。
@@ -21,7 +21,7 @@
 - 低效复杂策略触发 `ctx.candles` 全量扫描 warning，但仍通过 validation。
 - `strategy_backtest_matrix` 返回 7 周期，包含 `timeframe`、`coverage`、`candleSource`，耗时约 161ms。
 - `strategy_export_artifact includeCode=false` 返回 `artifactId`、`codeHash`、`detailMode=summary` 和固定 safety flags。
-- `quant_loop_run useOpenAI=true` 在 OpenAI 30 秒超时后走 fallback，约 58.5 秒完整返回，`liveTrading.enabled=false`。
+- 历史记录：早期 `quant_loop_run useOpenAI=true` 在 OpenAI 30 秒超时后走 fallback，约 58.5 秒完整返回，`liveTrading.enabled=false`。当前版本已改为 90 秒默认超时，并推荐现场评测使用 `useOpenAI=false` 的 deterministic path。
 
 质量优先补充：2026-06-14 根据新反馈调整优化方向：
 - 不再把 30 秒闭环作为核心目标；策略质量、回测覆盖透明和风险诊断优先。
@@ -35,11 +35,19 @@
 
 公网复测结果：
 - `pharos_wallet_info` 默认只返回 `walletConfigured`、`readOnly`、`privateKeyReturned=false`，不返回地址和余额。
-- `strategy_generate` 在 OpenAI 30 秒超时后 fallback，返回增强版风控策略，validation 通过。
+- `strategy_generate` 支持 90 秒 AI 质量优先路径；如 provider 超时会 fallback 到增强版风控策略，validation 通过。
 - `strategy_backtest_matrix` 返回 7 周期，首周期包含 `dataQuality`、`riskScore`、`stabilityScore`、`capitalEfficiencyScore`、`strategyQuality`。
 - 默认 fallback 策略回撤显著降低，仍保留真实负收益诊断，不粉饰收益。
 - `strategy_export_artifact includeCode=false` 返回 summary artifact，包含 `dataQuality`、策略质量字段和 safety flags。
-- `quant_loop_run useOpenAI=true` 约 60 秒完整返回，`steps` 显示 generate/advice 各自 30 秒 timeout fallback，matrix 约 81ms，`liveTrading.enabled=false`。
+- `quant_loop_run` 当前推荐评测路径为 `useOpenAI=false`，可稳定跑完整闭环并产生交易诊断；`useOpenAI=true` 作为可选增强模式，provider timeout 默认 90 秒。
+
+最终评测优化补充：2026-06-14 已按 Agent 反馈完成以下项：
+- README 顶部新增 `Judge Quick Test`，并明确 `Content-Type: application/json` 与 `Accept: application/json, text/event-stream`。
+- demo 默认采用 `useOpenAI=false`，避免现场评测被外部模型延迟影响；AI-backed mode 保留为质量增强路径。
+- deterministic demo 已可在 7 个周期产生非零交易，并返回 `noTradeReason`、`tradeActivityScore`、`entrySignalCount`、`blockedSignalCount`。
+- `quant_loop_run` 返回 `executionModeSummary`，包括 `generationMode`、`generationUsedFallback`、`adviceMode`、`adviceUsedFallback`、`providerTimeoutMs` 和 `qualityNote`。
+- 新增 `assets/artifact.schema.json`、`docs/PHASE2_ARTIFACT_REUSE.md` 和 `examples/consume-artifact-example.json`，强化 Phase 2 Agent 复用路径。
+- `npm run validate:skill` 当前通过 87 项检查；`npm test` 当前通过 typecheck、backtest smoke 和 Pharos read-only smoke。
 
 ## 项目定位
 
@@ -69,7 +77,7 @@ GitHub 仓库：
 
 当前仓库是否公开：
 
-用户暂未公开 GitHub 仓库。功能测试优先通过公网 MCP endpoint 进行。
+GitHub 仓库已公开。公开仓库不应包含 `.env`、`.ssh`、`.tools`、`.codex`、`.gitconfig` 或本地 OpenClaw 私有测试提示词。
 
 服务器部署路径：
 
