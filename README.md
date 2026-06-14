@@ -90,6 +90,64 @@ Expected checks:
 - `broadcastTransactions = false`.
 - `onChainWrites = false`.
 
+## Local Reproduction
+
+Recommended runtime:
+
+```text
+Node.js 20+
+```
+
+Install and validate the Skill package:
+
+```bash
+npm install
+npm run validate:skill
+npm test
+```
+
+Run the official-review-style public smoke test:
+
+```bash
+npm run judge:smoke
+```
+
+Local MCP runtime:
+
+```bash
+npm run mcp
+```
+
+Then, in another terminal:
+
+```bash
+npm run test:mcp
+```
+
+Reproducibility notes:
+
+- Public review does not require a local `.env`; reviewers can use the public MCP endpoint above.
+- `OPENAI_API_KEY` is optional. The recommended judging path uses `useOpenAI=false` for deterministic reproducibility.
+- `PRIVATE_KEY` is not required for public evaluation. Wallet output is read-only and does not return private keys.
+- `npm run test:openai` is optional and only checks the AI provider path.
+
+## Artifact Reuse For Future Agents
+
+The exported strategy artifact is a research and risk-validation input, not a trading authorization.
+
+Future Phase 2 Agents should:
+
+1. Load the artifact from `strategy_export_artifact` or `quant_loop_run`.
+2. Validate it against `assets/artifact.schema.json`.
+3. Confirm `safety.researchOnly = true`.
+4. Confirm `safety.liveTrading.enabled = false`.
+5. Confirm `safety.broadcastTransactions = false`.
+6. Confirm `safety.onChainWrites = false`.
+7. Review risk, drawdown, data quality, and trade activity diagnostics.
+8. Use any wallet, oracle, DEX, or execution Skill as a separate disabled-by-default module with its own dry-run, limits, and explicit confirmation.
+
+See `docs/PHASE2_ARTIFACT_REUSE.md`, `examples/consume-artifact-example.json`, and `examples/phase2-agent-consume-artifact-flow.md`.
+
 面向 Pharos Skill-to-Agent Dual Cascade Hackathon Phase 1 的 Pharos-compatible Skill package + MCP service runtime。
 
 本项目提供一个标准化、可复用的 Skill 模块，帮助 Agent 将自然语言交易想法转成可执行策略代码，并完成沙箱校验、多周期回测、AI 优化建议、模拟执行、策略产物导出，以及 Pharos Atlantic 测试网 RPC/钱包只读检查。

@@ -66,6 +66,7 @@ See:
 
 ```text
 examples/consume-artifact-example.json
+examples/phase2-agent-consume-artifact-flow.md
 ```
 
-That example shows how an Agent can record the artifact identity, verify safety flags, and decide whether it is eligible for a separate dry-run execution planner.
+These examples show how an Agent can record the artifact identity, verify safety flags, validate the schema, review risk diagnostics, and decide whether it is eligible for a separate dry-run execution planner.

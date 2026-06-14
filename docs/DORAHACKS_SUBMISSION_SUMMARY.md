@@ -24,8 +24,10 @@ The Skill package is organized for Agent-readable progressive disclosure:
 - `assets/artifact.schema.json`: machine-readable schema for exported strategy artifacts.
 - `src/`: MCP runtime and strategy lifecycle implementation.
 - `scripts/validate-skill.mjs`: submission self-check for local package structure and public MCP readiness.
+- `scripts/judge-smoke.mjs`: official-review-style smoke test against the public MCP endpoint.
 - `examples/demo-json-rpc-flow.md`: copy-ready JSON-RPC demo requests.
 - `examples/consume-artifact-example.json`: example Phase 2 artifact consumption plan.
+- `examples/phase2-agent-consume-artifact-flow.md`: step-by-step future Agent artifact consumption flow.
 - `docs/DEMO_FLOW.md`: short reviewer demo flow.
 - `docs/DEMO_TRANSCRIPT.md`: latest public endpoint test transcript.
 - `docs/PHASE2_ARTIFACT_REUSE.md`: Phase 2 artifact reuse and safety boundary guide.
@@ -114,6 +116,30 @@ If `PRIVATE_KEY` is configured in the runtime environment, it is used only for l
    `strategy_generate -> strategy_validate -> strategy_backtest_matrix -> strategy_advise -> strategy_simulate -> strategy_export_artifact`.
 10. Confirm artifact safety flags keep live execution disabled.
 
+## Local Reproducibility Notes
+
+Recommended runtime:
+
+```text
+Node.js 20+
+```
+
+Local package checks:
+
+```bash
+npm install
+npm run validate:skill
+npm test
+```
+
+Official-review-style public smoke test:
+
+```bash
+npm run judge:smoke
+```
+
+Reviewers do not need a local `.env` to evaluate the public MCP endpoint. `OPENAI_API_KEY` is optional because the recommended judging path uses `useOpenAI=false` for deterministic reproducibility. `PRIVATE_KEY` is not required for public evaluation; wallet output is read-only and does not return private keys.
+
 ## Validation Evidence
 
 Latest local and public validation commands:
@@ -125,7 +151,7 @@ npm test
 
 Latest observed results:
 
-- `validate:skill`: 67 checks passed.
+- `validate:skill`: 97 checks passed.
 - `npm test`: typecheck, backtest smoke, and Pharos read-only smoke passed.
 - Public health endpoint responded successfully.
 - Public `tools/list` exposed all 10 expected tools.
@@ -139,3 +165,7 @@ See `docs/DEMO_TRANSCRIPT.md` for the latest public endpoint transcript.
 Future Phase 2 Agents can consume exported strategy artifacts and combine them with wallet, oracle, DEX, or execution Skills under strict risk controls. Execution should remain a separate disabled-by-default module with Atlantic Testnet guards, max notional limits, slippage controls, dry-run transaction plans, and explicit confirmation.
 
 This Skill acts as the research and risk-validation layer for future Pharos Agents. Phase 2 Agents can consume exported artifacts and combine them with wallet, DEX, oracle, or execution Skills under strict guardrails.
+
+The exported artifact is not a trading authorization. A future Agent should first validate it against `assets/artifact.schema.json`, check all safety flags, review risk and drawdown diagnostics, query wallet/oracle context through separate read-only tools, and only then produce a dry-run execution plan for a separate execution Skill. Any write-capable Phase 2 module must require explicit user confirmation before broadcasting transactions.
+
+See `docs/PHASE2_ARTIFACT_REUSE.md`, `examples/consume-artifact-example.json`, and `examples/phase2-agent-consume-artifact-flow.md`.

@@ -20,6 +20,8 @@ const requiredFiles = [
   'assets/artifact.schema.json',
   'docs/PHASE2_ARTIFACT_REUSE.md',
   'examples/consume-artifact-example.json',
+  'examples/phase2-agent-consume-artifact-flow.md',
+  'scripts/judge-smoke.mjs',
 ];
 
 const requiredTools = [
@@ -120,6 +122,9 @@ assertCheck(skill.includes('assets/artifact.schema.json'), 'SKILL.md lists artif
 
 const readme = await readText('README.md');
 assertCheck(readme.includes('## Judge Quick Test'), 'README has Judge Quick Test', 'judge quick path missing');
+assertCheck(readme.includes('## Local Reproduction'), 'README has Local Reproduction', 'local reproduction notes missing');
+assertCheck(readme.includes('npm run judge:smoke'), 'README documents judge smoke test', 'judge smoke command missing');
+assertCheck(readme.includes('## Artifact Reuse For Future Agents'), 'README has artifact reuse section', 'artifact reuse section missing');
 assertCheck(readme.includes('Accept: application/json, text/event-stream'), 'README documents MCP Accept header', 'MCP Accept header missing');
 assertCheck(readme.includes('"useOpenAI": false'), 'README quick test uses deterministic path', 'useOpenAI=false missing from quick test');
 
@@ -130,10 +135,19 @@ assertCheck(demoJsonRpc.includes('"useOpenAI": false'), 'JSON-RPC demo defaults 
 const phase2Reuse = await readText('docs/PHASE2_ARTIFACT_REUSE.md');
 assertCheck(phase2Reuse.includes('assets/artifact.schema.json'), 'Phase 2 reuse doc references artifact schema', 'artifact schema reference missing');
 assertCheck(phase2Reuse.includes('disabled by default'), 'Phase 2 reuse doc keeps execution disabled by default', 'execution guardrail missing');
+assertCheck(phase2Reuse.includes('examples/phase2-agent-consume-artifact-flow.md'), 'Phase 2 reuse doc links detailed flow', 'detailed flow link missing');
 
 const consumeExample = await readJson('examples/consume-artifact-example.json');
 assertCheck(consumeExample.artifactRef?.schema === 'assets/artifact.schema.json', 'consume artifact example references schema', 'schema reference missing');
 assertCheck(Array.isArray(consumeExample.requiredChecks), 'consume artifact example has required checks', 'requiredChecks missing');
+
+const phase2Flow = await readText('examples/phase2-agent-consume-artifact-flow.md');
+assertCheck(phase2Flow.includes('not a trading authorization'), 'Phase 2 flow rejects trading authorization framing', 'trading authorization warning missing');
+assertCheck(phase2Flow.includes('DRY_RUN_PLAN_ONLY'), 'Phase 2 flow uses dry-run-only decision', 'dry-run decision missing');
+assertCheck(phase2Flow.includes('explicitUserConfirmation'), 'Phase 2 flow requires explicit confirmation', 'explicit confirmation guard missing');
+
+const packageJson = await readJson('package.json');
+assertCheck(packageJson.scripts?.['judge:smoke'] === 'node scripts/judge-smoke.mjs', 'package.json defines judge:smoke', 'judge smoke script missing');
 
 const pharosNetwork = await readText('references/pharos-network.md');
 for (const expected of [

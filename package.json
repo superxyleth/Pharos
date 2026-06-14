@@ -12,6 +12,7 @@
     "test:pharos": "tsx scripts/smoke-pharos.mjs",
     "test:backtest": "tsx scripts/smoke-backtest.mjs",
     "test:mcp": "tsx scripts/smoke-mcp.mjs",
+    "judge:smoke": "node scripts/judge-smoke.mjs",
     "validate:skill": "node scripts/validate-skill.mjs",
     "test": "npm run typecheck && npm run test:backtest && npm run test:pharos"
   },
