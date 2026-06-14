@@ -29,6 +29,13 @@ export function exportStrategyArtifact(params: {
     detailMode: params.includeCode === false ? 'summary' : 'full',
     backtestSummary: (params.backtests ?? []).map((result) => ({
       period: result.period,
+      timeframe: result.timeframe,
+      coverage: result.coverage,
+      candleSource: result.candleSource,
+      startTime: result.startTime,
+      endTime: result.endTime,
+      dataQuality: result.dataQuality,
+      candleCount: result.candleCount,
       totalReturnPct: result.totalReturnPct,
       winRatePct: result.winRatePct,
       winRateBasis: result.winRateBasis,
@@ -39,7 +46,18 @@ export function exportStrategyArtifact(params: {
       unrealizedPnl: result.unrealizedPnl,
       openPositionValue: result.openPositionValue,
       exposurePct: result.exposurePct,
+      riskScore: result.riskScore,
+      stabilityScore: result.stabilityScore,
+      capitalEfficiencyScore: result.capitalEfficiencyScore,
+      strategyQuality: result.strategyQuality,
     })),
+    safety: {
+      researchOnly: true,
+      liveTrading: { enabled: false },
+      broadcastTransactions: false,
+      onChainWrites: false,
+      privateKeyExposure: false,
+    },
     riskNotice: [
       'This artifact is for Phase 1 strategy research, backtesting, and simulation.',
       'It does not authorize live trading.',
@@ -47,7 +65,7 @@ export function exportStrategyArtifact(params: {
     ],
     usage: {
       evaluateSignature: 'exports.evaluate(ctx)',
-      requiredContext: ['candle', 'candles', 'index', 'state', 'position', 'initialCapital', 'equity'],
+      requiredContext: ['candle', 'candles', 'indicators', 'index', 'state', 'position', 'initialCapital', 'equity'],
       expectedDecision: "{ action: 'BUY'|'SELL'|'HOLD', amountUsd?, fraction?, reason?, statePatch? }",
     },
   };

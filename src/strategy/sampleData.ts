@@ -2,30 +2,43 @@ import type { Candle } from './types.js';
 
 const INTERVAL_MS: Record<string, number> = {
   '5m': 5 * 60_000,
+  '15m': 15 * 60_000,
   '1H': 60 * 60_000,
+  '4H': 4 * 60 * 60_000,
   '1D': 24 * 60 * 60_000,
   '1W': 7 * 24 * 60 * 60_000,
 };
 
-export function intervalForPeriod(period: string): { bar: string; limit: number } {
+export interface PeriodInterval {
+  bar: string;
+  limit: number;
+  coverage: string;
+  stepMs: number;
+}
+
+export function intervalForPeriod(period: string): PeriodInterval {
   switch (period) {
     case '1D':
-      return { bar: '5m', limit: 288 };
+      return withStep({ bar: '5m', limit: 288, coverage: 'full-period' });
     case '1W':
-      return { bar: '1H', limit: 168 };
+      return withStep({ bar: '15m', limit: 672, coverage: 'full-period' });
     case '1M':
-      return { bar: '1H', limit: 720 };
+      return withStep({ bar: '1H', limit: 720, coverage: 'full-period' });
     case '6M':
-      return { bar: '1H', limit: 4320 };
+      return withStep({ bar: '4H', limit: 1080, coverage: 'full-period' });
     case '1Y':
-      return { bar: '1H', limit: 8760 };
+      return withStep({ bar: '1D', limit: 365, coverage: 'full-period' });
     case '2Y':
-      return { bar: '1H', limit: 17520 };
+      return withStep({ bar: '1D', limit: 730, coverage: 'full-period' });
     case '3Y':
-      return { bar: '1H', limit: 26280 };
+      return withStep({ bar: '1D', limit: 1095, coverage: 'full-period' });
     default:
-      return { bar: '1H', limit: 720 };
+      return withStep({ bar: '1H', limit: 720, coverage: 'full-period' });
   }
+}
+
+export function intervalMsForBar(bar: string): number {
+  return INTERVAL_MS[bar] ?? INTERVAL_MS['1H'];
 }
 
 export function createSampleCandles(params: {
@@ -35,7 +48,7 @@ export function createSampleCandles(params: {
   startTime?: number;
 }): Candle[] {
   const limit = Math.max(20, Math.min(params.limit, 30_000));
-  const stepMs = INTERVAL_MS[params.bar ?? '1H'] ?? INTERVAL_MS['1H'];
+  const stepMs = intervalMsForBar(params.bar ?? '1H');
   const startTime = params.startTime ?? Date.UTC(2025, 0, 1);
   let price = params.startPrice ?? 100;
   const candles: Candle[] = [];
@@ -66,4 +79,11 @@ export function createSampleCandles(params: {
 
 function round(value: number): number {
   return Number(value.toFixed(8));
+}
+
+function withStep(interval: Omit<PeriodInterval, 'stepMs'>): PeriodInterval {
+  return {
+    ...interval,
+    stepMs: intervalMsForBar(interval.bar),
+  };
 }

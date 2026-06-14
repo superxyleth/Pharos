@@ -2,6 +2,45 @@
 
 更新时间：2026-06-13 23:50 CST
 
+接力开发补充：2026-06-13 已新增短版 OpenClaw Prompt、完整 JSON-RPC demo flow、DoraHacks submission summary，并在 README / Demo Flow 中加入入口。
+
+优化补充：2026-06-14 已按评测反馈优化策略回测路径：
+- 新增 full-period adaptive-timeframe backtesting，长周期使用更大 K 线粒度但保留完整周期覆盖。
+- 默认矩阵改为 `1D=5m`、`1W=15m`、`1M=1H`、`6M=4H`、`1Y/2Y/3Y=1D`。
+- 外部高频 K 线会按完整输入跨度聚合为 OHLCV 桶，不再只截取最后一段 partial data；外部数据结果标记为 `coverage: "provided-input-span"`。
+- 新增 `ctx.indicators`，提供 `ema20`、`ema50`、`rsi14`、`atr14`、`previousClose`。
+- validator 对 `ctx.candles` 全量扫描给 warning，但不禁止复杂策略。
+- OpenAI 调用新增 `OPENAI_TIMEOUT_MS`，默认 30 秒，超时后触发可控 fallback。
+- artifact 固定输出 `researchOnly=true`、`liveTrading.enabled=false`、`broadcastTransactions=false`、`onChainWrites=false`。
+
+部署补充：2026-06-14 00:59 CST 已将本轮优化通过 SFTP 覆盖上传到服务器 `/opt/projects/pharos-quant-strategy-lifecycle-skill`，没有删除服务器文件；远端 `npm install`、`npm run typecheck`、`systemctl restart pharos-quant-skill.service` 均成功。
+
+公网复测结果：
+- `tools/list` 返回 10 个工具。
+- `pharos_network_status` 返回 `chainId=688689`、`nativeToken=PHRS`。
+- 低效复杂策略触发 `ctx.candles` 全量扫描 warning，但仍通过 validation。
+- `strategy_backtest_matrix` 返回 7 周期，包含 `timeframe`、`coverage`、`candleSource`，耗时约 161ms。
+- `strategy_export_artifact includeCode=false` 返回 `artifactId`、`codeHash`、`detailMode=summary` 和固定 safety flags。
+- `quant_loop_run useOpenAI=true` 在 OpenAI 30 秒超时后走 fallback，约 58.5 秒完整返回，`liveTrading.enabled=false`。
+
+质量优先补充：2026-06-14 根据新反馈调整优化方向：
+- 不再把 30 秒闭环作为核心目标；策略质量、回测覆盖透明和风险诊断优先。
+- backtest result 新增 `startTime`、`endTime`、`dataQuality`。
+- backtest result 新增 `riskScore`、`stabilityScore`、`capitalEfficiencyScore`、`strategyQuality`。
+- deterministic fallback 策略增强趋势过滤、RSI 入场、ATR 波动过滤、最大敞口、冷却周期、止盈和风险关闭减仓。
+- `quant_loop_run` 新增 `steps`，记录 generate / validate / backtest_matrix / advise / simulate / export_artifact 的状态和耗时。
+- `pharos_wallet_info` 默认只返回 read-only 状态，不返回完整地址和余额；需要显式 `includeAddress` / `includeBalance`。
+
+质量优先部署补充：2026-06-14 01:36 CST 已将上述质量优先优化部署到公网服务器。
+
+公网复测结果：
+- `pharos_wallet_info` 默认只返回 `walletConfigured`、`readOnly`、`privateKeyReturned=false`，不返回地址和余额。
+- `strategy_generate` 在 OpenAI 30 秒超时后 fallback，返回增强版风控策略，validation 通过。
+- `strategy_backtest_matrix` 返回 7 周期，首周期包含 `dataQuality`、`riskScore`、`stabilityScore`、`capitalEfficiencyScore`、`strategyQuality`。
+- 默认 fallback 策略回撤显著降低，仍保留真实负收益诊断，不粉饰收益。
+- `strategy_export_artifact includeCode=false` 返回 summary artifact，包含 `dataQuality`、策略质量字段和 safety flags。
+- `quant_loop_run useOpenAI=true` 约 60 秒完整返回，`steps` 显示 generate/advice 各自 30 秒 timeout fallback，matrix 约 81ms，`liveTrading.enabled=false`。
+
 ## 项目定位
 
 本项目是面向 DoraHacks Pharos Phase 1 / Skill-to-Agent Dual Cascade Hackathon 的 Pharos-compatible Skill package + MCP service runtime。
@@ -118,8 +157,11 @@ Skill package 入口：
 - `references/future-phase2-execution.md`
 - `docs/DEMO_FLOW.md`
 - `docs/ARCHITECTURE.md`
+- `docs/DORAHACKS_SUBMISSION_SUMMARY.md`
 - `docs/PHAROS_HACKATHON_REQUIREMENTS.md`
 - `examples/evaluator-prompt.md`
+- `examples/openclaw-agent-prompt.md`
+- `examples/demo-json-rpc-flow.md`
 
 公开元信息：
 
@@ -134,6 +176,7 @@ Skill package 入口：
 - `OPENAI_API_KEY`
 - `OPENAI_BASE_URL`
 - `OPENAI_MODEL`
+- `OPENAI_TIMEOUT_MS`
 - `PHAROS_RPC_URL`
 - `PHAROS_CHAIN_ID`
 - `PRIVATE_KEY`
@@ -206,10 +249,12 @@ Phase 1 明确不做 live trading。
 当前已优化的 Agent 串联能力：
 
 - `strategy_backtest_matrix` compact 输出保留 `trades: []`、`equityCurve: []`、`detailMode: "compact"`。
+- backtest result 已包含 `timeframe`、`coverage`、`candleSource`，用于说明完整周期自适应 K 线覆盖。
 - compact backtest result 已包含 `winRateBasis`、`realizedPnl`、`unrealizedPnl`、`openPositionValue`、`openPositionCost`、`exposurePct`。
 - `strategy_advise.results` 可直接接收完整 matrix object。
 - `strategy_export_artifact.backtests` 可直接接收完整 matrix object。
 - `strategy_export_artifact` 支持 `includeCode=false`，返回轻量 artifact：`artifactId`、`codeHash`、`detailMode: "summary"`。
+- `strategy_export_artifact` artifact 已固定包含 Phase 1 safety flags。
 
 ## 本地已完成
 
@@ -471,11 +516,11 @@ npm run test:openai
 
 可选增强：
 
-1. 增加一个更短的 `examples/openclaw-agent-prompt.md`。
-2. 增加演示截图或调用录屏。
-3. 增加一份 DoraHacks 提交用摘要。
-4. 增加一个 `demo` 示例，展示从策略生成到 artifact 导出的完整 JSON-RPC 请求。
-5. 评估是否将服务器部署目录恢复成 Git 仓库，方便后续直接 `git pull`。
+1. 部署本轮优化到公网服务器后，让 OpenClaw 重新测试 `strategy_backtest_matrix` 和 `quant_loop_run`。
+2. 根据复测结果决定是否继续增加 matrix cache 或独立 `quant_loop_fast`。
+3. 增加演示截图或调用录屏。
+4. 评估是否将服务器部署目录恢复成 Git 仓库，方便后续直接 `git pull`。
+5. 如需继续增强 demo，可把 `examples/demo-json-rpc-flow.md` 中的占位策略代码替换为一次真实 `strategy_generate` 输出。
 
 ## 新页面接力提示
 

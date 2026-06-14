@@ -1,5 +1,6 @@
 import type { Candle, PositionState, StrategyContext } from './types.js';
 import { compileStrategy, normalizeDecision } from './sandbox.js';
+import { precomputeIndicators } from './indicators.js';
 
 export function simulateStrategy(params: {
   code: string;
@@ -9,6 +10,7 @@ export function simulateStrategy(params: {
   position?: PositionState;
 }) {
   const evaluator = compileStrategy(params.code);
+  const indicators = precomputeIndicators(params.candles);
   const state = { ...(params.state ?? {}) };
   const position = params.position ?? {
     baseAmount: 0,
@@ -21,6 +23,7 @@ export function simulateStrategy(params: {
     const ctx: StrategyContext = {
       candle,
       candles: params.candles.slice(0, index + 1),
+      indicators: indicators[index],
       index,
       state,
       position: { ...position },

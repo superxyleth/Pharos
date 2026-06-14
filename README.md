@@ -94,6 +94,11 @@ Demo 与架构文档：
 
 - `docs/DEMO_FLOW.md`
 - `docs/ARCHITECTURE.md`
+- `docs/DORAHACKS_SUBMISSION_SUMMARY.md`
+- `docs/SUBMISSION_CHECKLIST.md`
+- `docs/DEMO_TRANSCRIPT.md`
+- `docs/AGENT_EVALUATION_REPORT_2026-06-14.md`
+- `examples/demo-json-rpc-flow.md`
 
 ## MCP 工具
 
@@ -122,6 +127,7 @@ copy .env.example .env
 OPENAI_API_KEY=replace_with_openai_api_key
 OPENAI_BASE_URL=https://api.openai.com/v1
 OPENAI_MODEL=gpt-4o-mini
+OPENAI_TIMEOUT_MS=30000
 
 PHAROS_RPC_URL=https://atlantic.dplabs-internal.com
 PHAROS_CHAIN_ID=688689
@@ -133,6 +139,7 @@ PORT=3001
 说明：
 
 - `OPENAI_BASE_URL` 支持 OpenAI 兼容中转服务。
+- `OPENAI_TIMEOUT_MS` 用于避免模型调用无限阻塞；AI 生成和建议以策略质量、风险审查为优先，耗时较长是可接受的，超时后工具会走可控 fallback。
 - `PRIVATE_KEY` 只用于本地派生地址和查询余额，不会被工具返回。
 - 未配置 `PRIVATE_KEY` 时，策略生成、回测、模拟等功能仍可使用，钱包检查会提示未配置。
 
@@ -193,6 +200,12 @@ node scripts/mcp-call.mjs examples/quant-loop-run.json
 type examples\evaluator-prompt.md
 ```
 
+完整 JSON-RPC demo 请求：
+
+```bash
+type examples\demo-json-rpc-flow.md
+```
+
 ## 测试
 
 ```bash
@@ -208,12 +221,25 @@ npm run test:mcp
 npm test
 ```
 
+Skill package self-check:
+
+```bash
+npm run validate:skill
+```
+
+Use offline mode when you only want to validate local package files without checking the public endpoint:
+
+```bash
+npm run validate:skill -- --offline
+```
+
 测试说明：
 
 - `test:backtest` 会运行多周期回测 smoke test。
 - `test:pharos` 会检查 Pharos Atlantic RPC，并在配置 `PRIVATE_KEY` 时查询钱包余额。
 - `test:openai` 会验证 OpenAI 兼容接口是否可用。
 - `test:mcp` 需要先启动 `npm run mcp`，用于验证 MCP `tools/list`。
+- `validate:skill` 会检查 `SKILL.md`、`references/`、`assets/`、Phase 1 安全开关、官方 Atlantic Testnet 参数和公网 MCP 只读可用性。
 
 ## 策略代码规范
 
@@ -229,6 +255,7 @@ exports.evaluate = function(ctx) {
 
 - `candle`：当前 K 线
 - `candles`：截至当前的历史 K 线
+- `indicators`：预计算指标，包括 `ema20`、`ema50`、`rsi14`、`atr14`、`previousClose`
 - `index`：当前 K 线索引
 - `state`：策略状态
 - `position`：模拟持仓状态
@@ -263,6 +290,59 @@ exports.evaluate = function(ctx) {
 - `eval`
 - `Function`
 - 网络请求
+
+## 回测数据覆盖
+
+回测采用完整周期 + 自适应 K 线粒度，不用少量 partial data 冒充完整周期。
+
+本项目优先保证回测覆盖透明、风险诊断和策略质量，不以最低延迟为核心目标。负收益是有效诊断结果，代表策略风险被发现，不代表工具失败。
+
+默认矩阵：
+
+| 周期 | K 线粒度 | 覆盖 |
+| --- | --- | --- |
+| `1D` | `5m` | 完整周期 |
+| `1W` | `15m` | 完整周期 |
+| `1M` | `1H` | 完整周期 |
+| `6M` | `4H` | 完整周期 |
+| `1Y` | `1D` | 完整周期 |
+| `2Y` | `1D` | 完整周期 |
+| `3Y` | `1D` | 完整周期 |
+
+如果外部数据 Skill 注入了更高频 K 线，回测引擎会按完整输入跨度聚合为目标 OHLCV 桶，而不是只截取最后一小段。外部数据结果会标记 `coverage: "provided-input-span"`，避免把不足周期的数据误报成完整周期。
+
+回测结果会返回：
+
+- `startTime` / `endTime`
+- `dataQuality`
+- `riskScore`
+- `stabilityScore`
+- `capitalEfficiencyScore`
+- `strategyQuality`
+
+`strategyQuality` 会标记策略是否包含趋势过滤、波动过滤、敞口限制、止损/风险关闭逻辑，以及是否使用 `ctx.indicators`。
+
+## 评委测试路径
+
+完整质量路径：
+
+```json
+{
+  "useOpenAI": true
+}
+```
+
+AI-backed generation / advice 可能耗时 60-90 秒，这是预期行为。该路径用于评估策略质量、风险建议和完整闭环。
+
+可用性 smoke path：
+
+```json
+{
+  "useOpenAI": false
+}
+```
+
+该路径用于快速确认工具链可用，不作为策略质量评估的唯一依据。
 
 ## Pharos 网络
 

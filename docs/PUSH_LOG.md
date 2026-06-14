@@ -200,3 +200,51 @@ M README.md
 ```text
 M docs/CURRENT_PROGRESS.md
 ```
+
+### 20260614-193307 prepare public Pharos skill submission package
+
+- Branch: `main`
+- Previous HEAD: `7360b79`
+- Memory tag: `memory/20260614-193307-prepare-public-pharos-skill-submission-p`
+- Executed:
+  - Updated `docs/PUSH_LOG.md`
+  - Staged current tracked and untracked safe files
+  - Created a Git commit
+  - Created an annotated memory tag
+  - Pushed branch and tags to `origin`
+- Workspace changes before push:
+```text
+M .env.example
+ M README.md
+ M SKILL.md
+ M assets/networks.json
+ M docs/CURRENT_PROGRESS.md
+ M docs/DEMO_FLOW.md
+ M examples/evaluator-prompt.md
+ M package.json
+ M references/input-output-contracts.md
+ M references/mcp-tools.md
+ M references/pharos-network.md
+ M src/config.ts
+ M src/openai.ts
+ M src/pharos.ts
+ M src/strategy/advisor.ts
+ M src/strategy/artifact.ts
+ M src/strategy/backtest.ts
+ M src/strategy/generation.ts
+ M src/strategy/sampleData.ts
+ M src/strategy/simulator.ts
+ M src/strategy/types.ts
+ M src/strategy/validate.ts
+ M src/tools/loopTools.ts
+ M src/tools/pharosTools.ts
+ M src/tools/strategyTools.ts
+?? docs/AGENT_EVALUATION_REPORT_2026-06-14.md
+?? docs/DEMO_TRANSCRIPT.md
+?? docs/DORAHACKS_SUBMISSION_SUMMARY.md
+?? docs/SUBMISSION_CHECKLIST.md
+?? examples/demo-json-rpc-flow.md
+?? scripts/validate-skill.mjs
+?? src/strategy/indicators.ts
+?? src/strategy/quality.ts
+```

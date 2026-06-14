@@ -8,6 +8,10 @@ export async function adviseStrategy(params: {
 }): Promise<{ success: true; advice: string; fallback?: boolean }> {
   const summary = params.results.map((result) => ({
     period: result.period,
+    timeframe: result.timeframe,
+    coverage: result.coverage,
+    candleCount: result.candleCount,
+    dataQuality: result.dataQuality,
     totalReturnPct: result.totalReturnPct,
     winRatePct: result.winRatePct,
     winRateBasis: result.winRateBasis,
@@ -17,10 +21,15 @@ export async function adviseStrategy(params: {
     realizedPnl: result.realizedPnl,
     unrealizedPnl: result.unrealizedPnl,
     exposurePct: result.exposurePct,
+    riskScore: result.riskScore,
+    stabilityScore: result.stabilityScore,
+    capitalEfficiencyScore: result.capitalEfficiencyScore,
+    strategyQuality: result.strategyQuality,
   }));
   const prompt = [
     'Review this strategy and backtest summary for a Pharos quant strategy Skill.',
-    'Give concise, actionable advice. Mention risk, stability across periods, and next simulation steps.',
+    'Give concise, actionable advice. Mention data coverage, risk, stability across periods, capital efficiency, and next simulation steps.',
+    'A negative return is a valid diagnostic result. Do not promise profit or suggest live trading.',
     `Question: ${params.question ?? 'How should this strategy be improved before mock/live usage?'}`,
     `Backtest summary: ${JSON.stringify(summary, null, 2)}`,
     `Strategy code:\n${params.code.slice(0, 5000)}`,

@@ -39,6 +39,10 @@ Point to:
 - `references/`
 - `assets/`
 - `examples/evaluator-prompt.md`
+- `examples/demo-json-rpc-flow.md`
+- `docs/DORAHACKS_SUBMISSION_SUMMARY.md`
+- `docs/SUBMISSION_CHECKLIST.md`
+- `docs/DEMO_TRANSCRIPT.md`
 
 ### 2. Show MCP Endpoint
 
@@ -109,7 +113,7 @@ Suggested input:
   "symbol": "PHRS",
   "chain": "pharos-atlantic-testnet",
   "initialCapital": 1000,
-  "useOpenAI": true
+  "useOpenAI": false
 }
 ```
 
@@ -122,6 +126,8 @@ Expected output:
 - sandbox simulation
 - exported artifact
 - `liveTrading.enabled = false`
+
+Use this deterministic path for a reliable live demo. For deeper strategy-quality review, run the same request with `useOpenAI=true`; that path may take longer because AI-backed generation and advice prioritize quality and risk review.
 
 ### 6. Modular Chain
 
@@ -165,3 +171,10 @@ Future Phase 2 Agents can consume exported strategy artifacts and combine them w
 - no live trading or transaction broadcast occurs.
 - output is reusable by future Agents.
 
+## Supporting Materials
+
+- Copy-ready JSON-RPC requests: `examples/demo-json-rpc-flow.md`
+- DoraHacks submission summary: `docs/DORAHACKS_SUBMISSION_SUMMARY.md`
+- Public demo transcript: `docs/DEMO_TRANSCRIPT.md`
+- Submission checklist: `docs/SUBMISSION_CHECKLIST.md`
+- Agent evaluation report: `docs/AGENT_EVALUATION_REPORT_2026-06-14.md`

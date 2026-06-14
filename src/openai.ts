@@ -21,15 +21,30 @@ export async function completeText(params: {
   user: string;
   maxTokens?: number;
   temperature?: number;
+  timeoutMs?: number;
 }): Promise<string> {
-  const response = await getOpenAIClient().chat.completions.create({
-    model: appConfig.openaiModel,
-    messages: [
-      { role: 'system', content: params.system },
-      { role: 'user', content: params.user },
-    ],
-    max_tokens: params.maxTokens ?? 1200,
-    temperature: params.temperature ?? 0.2,
-  });
-  return response.choices[0]?.message?.content?.trim() ?? '';
+  const timeoutMs = params.timeoutMs ?? appConfig.openaiTimeoutMs;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await getOpenAIClient().chat.completions.create({
+      model: appConfig.openaiModel,
+      messages: [
+        { role: 'system', content: params.system },
+        { role: 'user', content: params.user },
+      ],
+      max_tokens: params.maxTokens ?? 1200,
+      temperature: params.temperature ?? 0.2,
+    }, {
+      signal: controller.signal,
+    });
+    return response.choices[0]?.message?.content?.trim() ?? '';
+  } catch (error) {
+    if (controller.signal.aborted) {
+      throw new Error(`OpenAI completion timed out after ${timeoutMs}ms.`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
 }

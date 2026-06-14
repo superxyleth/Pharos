@@ -24,7 +24,9 @@ export function registerLoopTools(server: McpServer) {
     },
     async ({ description, symbol = 'PHRS', chain = 'pharos-atlantic-testnet', initialCapital = 1000, useOpenAI = true }) => {
       try {
+        const steps: Array<Record<string, unknown>> = [];
         let generated;
+        const generateStarted = Date.now();
         if (useOpenAI) {
           try {
             generated = await generateStrategyCode({ description, symbol, chain, initialCapital });
@@ -47,22 +49,63 @@ export function registerLoopTools(server: McpServer) {
             validation: validateStrategyCode(code),
           };
         }
+        steps.push({
+          name: 'generate',
+          status: 'completed',
+          mode: useOpenAI ? 'ai-with-fallback' : 'deterministic',
+          fallback: 'fallback' in generated ? Boolean(generated.fallback) : false,
+          durationMs: Date.now() - generateStarted,
+        });
 
+        const validateStarted = Date.now();
+        steps.push({
+          name: 'validate',
+          status: generated.validation.valid ? 'completed' : 'completed_with_errors',
+          durationMs: Date.now() - validateStarted,
+          warnings: generated.validation.warnings,
+        });
+
+        const backtestStarted = Date.now();
         const backtests = runBacktestMatrix({
           code: generated.code,
           symbol,
           initialCapital,
         });
+        steps.push({
+          name: 'backtest_matrix',
+          status: 'completed',
+          periods: backtests.length,
+          coverage: 'full-period-adaptive-timeframe',
+          durationMs: Date.now() - backtestStarted,
+        });
+
+        const adviseStarted = Date.now();
         const advice = await adviseStrategy({
           code: generated.code,
           results: backtests,
           question: 'Is this strategy stable enough for mock simulation, and what should be improved?',
         });
+        steps.push({
+          name: 'advise',
+          status: 'completed',
+          fallback: Boolean(advice.fallback),
+          durationMs: Date.now() - adviseStarted,
+        });
+
+        const simulateStarted = Date.now();
         const simulation = simulateStrategy({
           code: generated.code,
           candles: createSampleCandles({ limit: 30 }),
           initialCapital,
         });
+        steps.push({
+          name: 'simulate',
+          status: 'completed',
+          decisions: simulation.decisions.length,
+          durationMs: Date.now() - simulateStarted,
+        });
+
+        const artifactStarted = Date.now();
         const artifact = exportStrategyArtifact({
           name: `${symbol.toLowerCase()}-quant-loop-strategy`,
           description,
@@ -71,18 +114,36 @@ export function registerLoopTools(server: McpServer) {
           chain,
           backtests,
         });
+        steps.push({
+          name: 'export_artifact',
+          status: 'completed',
+          artifactId: artifact.artifactId,
+          durationMs: Date.now() - artifactStarted,
+        });
 
         return textResult({
           success: true,
           stage: 'phase1_skill_closed_loop',
+          steps,
           generated,
           backtestSummary: backtests.map((result) => ({
             period: result.period,
+            timeframe: result.timeframe,
+            coverage: result.coverage,
+            candleSource: result.candleSource,
+            startTime: result.startTime,
+            endTime: result.endTime,
+            dataQuality: result.dataQuality,
+            candleCount: result.candleCount,
             totalReturnPct: result.totalReturnPct,
             winRatePct: result.winRatePct,
             maxDrawdownPct: result.maxDrawdownPct,
             sharpeRatio: result.sharpeRatio,
             totalTrades: result.totalTrades,
+            riskScore: result.riskScore,
+            stabilityScore: result.stabilityScore,
+            capitalEfficiencyScore: result.capitalEfficiencyScore,
+            strategyQuality: result.strategyQuality,
           })),
           advice,
           simulation,

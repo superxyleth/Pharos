@@ -45,17 +45,29 @@ export function getConfiguredWallet(): Wallet {
   return new Wallet(appConfig.privateKey, getPharosProvider());
 }
 
-export async function getWalletInfo() {
+export async function getWalletInfo(params: {
+  includeAddress?: boolean;
+  includeBalance?: boolean;
+} = {}) {
   const wallet = getConfiguredWallet();
-  const balanceWei = await wallet.provider!.getBalance(wallet.address);
-  return {
+  const result: Record<string, unknown> = {
     success: true,
     network: 'atlantic-testnet',
     chainId: appConfig.pharosChainId,
-    address: wallet.address,
+    walletConfigured: true,
+    readOnly: true,
+    privateKeyReturned: false,
     nativeToken: 'PHRS',
-    balance: formatEther(balanceWei),
-    balanceWei: balanceWei.toString(),
-    note: 'Private key is used locally only and is never returned by this tool.',
+    note: 'Wallet info is optional and read-only. The private key is used locally only and is never returned by this tool.',
   };
+  if (params.includeAddress) {
+    result.address = wallet.address;
+    result.addressPreview = `${wallet.address.slice(0, 6)}...${wallet.address.slice(-4)}`;
+  }
+  if (params.includeBalance) {
+    const balanceWei = await wallet.provider!.getBalance(wallet.address);
+    result.balance = formatEther(balanceWei);
+    result.balanceWei = balanceWei.toString();
+  }
+  return result;
 }

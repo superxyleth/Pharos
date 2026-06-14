@@ -6,11 +6,13 @@
       "displayName": "Pharos Atlantic Testnet",
       "chainId": 688689,
       "rpcUrl": "https://atlantic.dplabs-internal.com",
+      "wssUrl": "wss://atlantic.dplabs-internal.com",
       "nativeToken": "PHRS",
       "explorerUrl": "https://atlantic.pharosscan.xyz/",
-      "officialDocsUrl": "https://docs.pharosnetwork.xyz/",
+      "officialDocsUrl": "https://docs.pharos.xyz/getting-started/network/atlantic-testnet",
+      "rateLimit": "500 times/5m",
+      "maxPendingTxsPerAddress": 64,
       "writeEnabled": false
     }
   ]
 }
-

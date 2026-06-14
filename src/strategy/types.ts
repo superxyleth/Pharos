@@ -7,6 +7,34 @@ export interface Candle {
   volume: number;
 }
 
+export interface StrategyIndicators {
+  ema20?: number;
+  ema50?: number;
+  rsi14?: number;
+  atr14?: number;
+  previousClose?: number;
+}
+
+export interface BacktestDataQuality {
+  source: string;
+  coverageComplete: boolean;
+  resampled: boolean;
+  originalCandleCount: number;
+  resampledCandleCount: number;
+  missingCandles: number;
+  startTime: number;
+  endTime: number;
+}
+
+export interface StrategyQuality {
+  hasTrendFilter: boolean;
+  hasVolatilityFilter: boolean;
+  hasExposureLimit: boolean;
+  hasStopLossOrRiskOff: boolean;
+  usesPrecomputedIndicators: boolean;
+  notes: string[];
+}
+
 export type StrategyAction = 'BUY' | 'SELL' | 'HOLD';
 
 export interface StrategyDecision {
@@ -28,6 +56,7 @@ export interface PositionState {
 export interface StrategyContext {
   candle: Candle;
   candles: Candle[];
+  indicators: StrategyIndicators;
   index: number;
   state: Record<string, unknown>;
   position: PositionState;
@@ -50,6 +79,12 @@ export interface BacktestResult {
   success: true;
   symbol: string;
   period: string;
+  timeframe: string;
+  coverage: string;
+  candleSource: string;
+  startTime: number;
+  endTime: number;
+  dataQuality: BacktestDataQuality;
   candleCount: number;
   initialCapital: number;
   finalEquity: number;
@@ -64,6 +99,10 @@ export interface BacktestResult {
   openPositionValue: number;
   openPositionCost: number;
   exposurePct: number;
+  riskScore: number;
+  stabilityScore: number;
+  capitalEfficiencyScore: number;
+  strategyQuality: StrategyQuality;
   trades: Trade[];
   equityCurve: Array<{ time: number; equity: number; drawdownPct: number }>;
 }

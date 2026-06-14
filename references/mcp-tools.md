@@ -25,6 +25,7 @@ Security notes:
 - The private key is never returned.
 - This is a read-only check.
 - If `PRIVATE_KEY` is missing, the tool reports that wallet info is unavailable.
+- Address and balance are omitted by default on public deployments. Use `includeAddress=true` and/or `includeBalance=true` when an evaluator explicitly needs them.
 
 ## `strategy_generate`
 
@@ -59,6 +60,10 @@ Runs one sandbox backtest period.
 
 Compact output includes return, win rate, drawdown, Sharpe, trade count, realized/unrealized PnL, open position value, exposure percentage, and win-rate basis.
 
+Backtest outputs also include `timeframe`, `coverage`, and `candleSource` so Agents can tell whether a result used synthetic full-period candles or externally supplied full-period candles.
+
+They also include `startTime`, `endTime`, `dataQuality`, `riskScore`, `stabilityScore`, `capitalEfficiencyScore`, and `strategyQuality`. These fields make long-running or negative-return backtests easier to interpret as diagnostics rather than failures.
+
 ## `strategy_backtest_matrix`
 
 Runs the standard matrix:
@@ -72,6 +77,20 @@ Runs the standard matrix:
 - `3Y`
 
 The compact matrix output is designed to flow directly into `strategy_advise` and `strategy_export_artifact`.
+
+The matrix uses full-period adaptive-timeframe backtesting:
+
+- `1D`: `5m`
+- `1W`: `15m`
+- `1M`: `1H`
+- `6M`: `4H`
+- `1Y`: `1D`
+- `2Y`: `1D`
+- `3Y`: `1D`
+
+This preserves full period coverage while avoiding unrealistic long-period minute/hour-level over-sampling.
+
+The Skill prioritizes full-period coverage transparency and risk diagnostics over minimum latency. AI-backed generation and advice may take longer because they are designed for strategy quality and cautious review.
 
 ## `strategy_advise`
 
@@ -96,6 +115,7 @@ It supports:
 - lightweight artifact with `includeCode=false`
 - `artifactId`
 - `codeHash`
+- fixed research-only safety flags
 - backtest summary
 - validation result
 - risk notice
@@ -107,4 +127,3 @@ Runs the full Phase 1 loop in one call:
 generate -> validate -> backtest matrix -> advise -> simulate -> export artifact
 
 This is the recommended demo and evaluator entry point.
-

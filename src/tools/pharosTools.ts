@@ -24,12 +24,13 @@ export function registerPharosTools(server: McpServer) {
     {
       description: 'Derive the local PRIVATE_KEY wallet address and read PHRS balance on Pharos Atlantic. Never returns the private key.',
       inputSchema: {
-        includeBalance: z.boolean().optional().describe('Reserved for compatibility; balance is always included when PRIVATE_KEY is configured.'),
+        includeAddress: z.boolean().optional().describe('When true, include the configured wallet public address. Defaults to false for public deployments.'),
+        includeBalance: z.boolean().optional().describe('When true, include the native PHRS balance. Defaults to false for public deployments.'),
       },
     },
-    async () => {
+    async ({ includeAddress = false, includeBalance = false }) => {
       try {
-        return textResult(await getWalletInfo());
+        return textResult(await getWalletInfo({ includeAddress, includeBalance }));
       } catch (error) {
         return errorResult(error instanceof Error ? error.message : String(error), {
           status: 'wallet_not_ready',
