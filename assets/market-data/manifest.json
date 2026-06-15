@@ -119,7 +119,7 @@
       "volumeAvailable": true,
       "notOnChainEvidence": true,
       "notExecutionEvidence": true,
-      "dataSource": "Friend server Binance spot 1h OHLCV CSV snapshot",
+      "dataSource": "Curated Binance spot 1h OHLCV CSV snapshot",
       "sourceServerPath": "/home/friend/chainalpha-quant/.data/market-history/binance/spot/1h/BTCUSDT.csv",
       "limitations": [
         "BTCUSDT spot candles are used as the underlying price proxy for WBTC research backtests.",
@@ -161,7 +161,7 @@
       "volumeAvailable": true,
       "notOnChainEvidence": true,
       "notExecutionEvidence": true,
-      "dataSource": "Friend server Binance spot 1h OHLCV CSV snapshot",
+      "dataSource": "Curated Binance spot 1h OHLCV CSV snapshot",
       "sourceServerPath": "/home/friend/chainalpha-quant/.data/market-history/binance/spot/1h/ETHUSDT.csv",
       "limitations": [
         "ETHUSDT spot candles are used as the underlying price proxy for WETH research backtests.",

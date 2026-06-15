@@ -62,7 +62,7 @@ http://150.158.28.155:3011/health
 
 ## MCP Tools
 
-The public MCP runtime exposes 10 core research tools:
+The public MCP runtime exposes 12 core/research tools:
 
 - `pharos_network_status`
 - `pharos_wallet_info`
@@ -171,7 +171,7 @@ Latest observed results:
 - `validate:skill`: 115 checks passed.
 - `npm test`: typecheck, backtest smoke, and Pharos read-only smoke passed.
 - Public health endpoint responded successfully.
-- Public `tools/list` exposed all 10 core tools and optional x402 payment-prep tools.
+- Public `tools/list` exposed all 12 core/research tools and optional x402 payment-prep tools.
 - Public `pharos_network_status` returned `atlantic-testnet` and chain ID `688689`.
 - Public deterministic `quant_loop_run` completed successfully on WBTC proxy market data and exported an artifact.
 

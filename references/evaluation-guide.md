@@ -37,7 +37,7 @@ Requests that omit the `Accept` header may receive `406 Not Acceptable`.
 
 Expected discovery:
 
-- 10 core research tools.
+- 12 core/research tools.
 - Optional x402 payment-prep tools may also be present:
   - `x402_payment_status`
   - `x402_product_catalog`

@@ -531,3 +531,23 @@ M README.md
  M docs/DORAHACKS_SUBMISSION_SUMMARY.md
 ?? docs/JUDGE_REPORT.md
 ```
+
+### 20260616-024805 polish judge tool count and market data source naming
+
+- Branch: `main`
+- Previous HEAD: `b5527dc`
+- Memory tag: `memory/20260616-024805-polish-judge-tool-count-and-market-data-`
+- Executed:
+  - Updated `docs/PUSH_LOG.md`
+  - Staged current tracked and untracked safe files
+  - Created a Git commit
+  - Created an annotated memory tag
+  - Pushed branch and tags to `origin`
+- Workspace changes before push:
+```text
+M assets/market-data/manifest.json
+ M docs/DORAHACKS_SUBMISSION_SUMMARY.md
+ M docs/JUDGE_DEMO_60_SECONDS.md
+ M references/evaluation-guide.md
+ M scripts/judge-smoke.mjs
+```

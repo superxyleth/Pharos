@@ -40,8 +40,8 @@ curl -X POST http://150.158.28.155:3011/mcp \
 Expected markers:
 
 ```text
-14 tools total:
-10 core research tools
+16 tools total:
+12 core/research tools
 4 optional x402 scaffold tools
 ```
 
@@ -83,7 +83,7 @@ Expected markers in the tool result payload:
     "onChainWrites": false
   },
   "dataSourceSummary": {
-    "type": "Friend server Binance spot 1h OHLCV CSV snapshot",
+    "type": "Curated Binance spot 1h OHLCV CSV snapshot",
     "marketEvidence": true
   },
   "artifact": {

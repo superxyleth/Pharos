@@ -120,7 +120,7 @@ try {
   const list = await postMcp({ jsonrpc: '2.0', id: 1, method: 'tools/list' });
   tools = list.result?.tools ?? [];
   const names = tools.map((tool) => tool.name);
-  addCheck('tools/list returns at least 10 core tools', tools.length >= requiredTools.length, `count=${tools.length}`);
+  addCheck('tools/list returns all 12 core/research tools', tools.length >= requiredTools.length, `count=${tools.length}`);
   for (const tool of requiredTools) {
     addCheck(`tools/list exposes ${tool}`, names.includes(tool));
   }
@@ -178,7 +178,7 @@ try {
   addCheck('deterministic generation mode is used', loop.executionModeSummary?.generationMode === 'deterministic', `mode=${loop.executionModeSummary?.generationMode}`);
   addCheck('provider timeout is 90000ms', loop.executionModeSummary?.providerTimeoutMs === 90000, `timeout=${loop.executionModeSummary?.providerTimeoutMs}`);
   addCheck('backtest summary has 7 periods', periods.length === 7, `periods=${periods.length}`);
-  addCheck('WBTC proxy market dataset is used', loop.dataSourceSummary?.sources?.some((source) => String(source).includes('Friend server Binance spot 1h OHLCV CSV snapshot')), `sources=${JSON.stringify(loop.dataSourceSummary?.sources)}`);
+  addCheck('WBTC proxy market dataset is used', loop.dataSourceSummary?.sources?.some((source) => String(source).includes('Curated Binance spot 1h OHLCV CSV snapshot')), `sources=${JSON.stringify(loop.dataSourceSummary?.sources)}`);
   addCheck('WBTC proxy data is market evidence', loop.dataSourceSummary?.marketEvidence === true, `marketEvidence=${loop.dataSourceSummary?.marketEvidence}`);
   addCheck('all backtest periods have trades', periods.every((period) => Number(period.totalTrades) > 0), `trades=${periods.map((period) => `${period.period}:${period.totalTrades}`).join(',')}`);
   addCheck('artifactId is present', Boolean(loop.artifact?.artifactId), loop.artifact?.artifactId ?? '');
