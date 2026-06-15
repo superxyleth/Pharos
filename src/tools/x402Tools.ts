@@ -47,10 +47,12 @@ export function registerX402Tools(server: McpServer) {
       description: 'Verify an x402 receipt scaffold without settlement. Production settlement must be delegated to a separate payment service.',
       inputSchema: {
         quoteId: z.string().optional().describe('Quote ID returned by x402_quote.'),
-        paymentPayload: z.unknown().optional().describe('Optional x402 payment payload or X-PAYMENT content.'),
+        paymentPayload: z.unknown().optional().describe('Optional x402 payment payload or PAYMENT-SIGNATURE content.'),
+        paymentRequirements: z.unknown().optional().describe('Optional x402 payment requirements used for facilitator verification.'),
         receipt: z.unknown().optional().describe('Optional payment receipt metadata.'),
       },
     },
-    async ({ quoteId, paymentPayload, receipt }) => textResult(verifyX402Receipt({ quoteId, paymentPayload, receipt })),
+    async ({ quoteId, paymentPayload, paymentRequirements, receipt }) =>
+      textResult(await verifyX402Receipt({ quoteId, paymentPayload, paymentRequirements, receipt })),
   );
 }

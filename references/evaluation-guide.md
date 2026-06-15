@@ -74,6 +74,14 @@ Use `useOpenAI=false` as the baseline judging path because it is deterministic, 
 
 For deeper strategy-quality review, repeat the same request with `useOpenAI=true`. The AI-backed path uses `OPENAI_TIMEOUT_MS=90000` by default and may take longer; if the provider times out, the Skill returns controlled fallback output instead of failing the loop.
 
+Expected safety and data-source markers:
+
+- `safetySummary.phase1Safe = true`
+- `safetySummary.broadcastTransactions = false`
+- `safetySummary.onChainWrites = false`
+- `dataSourceSummary.type = deterministic-sample` for the deterministic baseline
+- `dataSourceSummary.marketEvidence = false` for deterministic sample candles
+
 ## Step 5: Run Modular Tool Chain
 
 Run:
@@ -96,6 +104,8 @@ Call `x402_payment_status` and confirm:
 - `settlementBroadcastEnabled = false`
 - `onChainWritesEnabled = false`
 - x402 is optional and does not affect the core Phase 1 review path.
+
+For the public PHRS receipt demo, request `/paid/artifacts/phrs-public-test` without payment and confirm `HTTP 402` plus `PAYMENT-REQUIRED`. After sending `0.01 PHRS` to the quoted receiver, retry with `PAYMENT-SIGNATURE: <tx_hash>` and confirm `PAYMENT-RESPONSE.mode = native-phrs-receipt-verified`.
 
 Suggested review criteria:
 

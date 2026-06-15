@@ -1,5 +1,7 @@
 import { createHash } from 'node:crypto';
+import { formatEther, getAddress, parseEther } from 'ethers';
 import { appConfig } from '../config.js';
+import { getPharosProvider } from '../pharos.js';
 
 export interface X402Product {
   id: string;
@@ -23,6 +25,37 @@ export interface X402ReceiptInput {
   quoteId?: string;
   paymentPayload?: unknown;
   receipt?: unknown;
+  paymentRequirements?: unknown;
+}
+
+export interface X402VerificationResult {
+  success: true;
+  verified: boolean;
+  mode: string;
+  quoteId?: string;
+  settlementBroadcastEnabled: false;
+  onChainWritesEnabled: false;
+  facilitator?: {
+    url: string;
+    delegated: boolean;
+    response?: unknown;
+    error?: string;
+  };
+  payment?: {
+    asset: string;
+    transactionHash: string;
+    from: string;
+    to: string;
+    value: string;
+    valueWei: string;
+    requiredValue: string;
+    requiredValueWei: string;
+    blockNumber: number;
+    binding: string;
+    replayProtected: boolean;
+  };
+  reason: string;
+  nextStep: string;
 }
 
 const products: X402Product[] = [
@@ -61,6 +94,8 @@ const products: X402Product[] = [
   },
 ];
 
+const nativePhRsPaymentUseByTx = new Map<string, string>();
+
 export function getX402Status() {
   return {
     success: true,
@@ -73,6 +108,9 @@ export function getX402Status() {
     facilitatorUrlConfigured: Boolean(appConfig.x402.facilitatorUrl),
     defaultAsset: appConfig.x402.defaultAsset,
     defaultAmount: appConfig.x402.defaultAmount,
+    paymentRequiredHeader: 'PAYMENT-REQUIRED',
+    paymentSignatureHeader: 'PAYMENT-SIGNATURE',
+    paymentResponseHeader: 'PAYMENT-RESPONSE',
     requireConfirmation: appConfig.x402.requireConfirmation,
     devAcceptUnsignedReceipt: appConfig.x402.devAcceptUnsignedReceipt,
     settlementBroadcastEnabled: false,
@@ -105,6 +143,27 @@ export function createX402Quote(input: X402QuoteInput) {
   const method = input.method ?? product.method;
   const quoteId = hashQuote([product.id, resource, method, appConfig.x402.network, product.amount, product.asset].join('|'));
 
+  const requirements = {
+    scheme: 'exact',
+    network: appConfig.x402.network,
+    chainId: appConfig.x402.chainId,
+    resource,
+    method,
+    payTo: appConfig.x402.receiverAddress ?? 'configure X402_RECEIVER_ADDRESS',
+    asset: product.asset,
+    price: product.amount,
+    maxAmountRequired: product.amount,
+    facilitatorUrl: appConfig.x402.facilitatorUrl ?? 'configure X402_FACILITATOR_URL',
+    description: product.description,
+    mimeType: 'application/json',
+    output: product.output,
+  };
+  const officialPaymentRequired = {
+    x402Version: 1,
+    accepts: [requirements],
+    error: 'payment_required',
+  };
+
   return {
     success: true,
     enabled: appConfig.x402.enabled,
@@ -112,22 +171,12 @@ export function createX402Quote(input: X402QuoteInput) {
     product,
     paymentRequired: true,
     httpStatus: 402,
-    paymentHeader: 'X-PAYMENT',
-    paymentResponseHeader: 'X-PAYMENT-RESPONSE',
-    requirements: {
-      scheme: 'exact',
-      network: appConfig.x402.network,
-      chainId: appConfig.x402.chainId,
-      resource,
-      method,
-      payTo: appConfig.x402.receiverAddress ?? 'configure X402_RECEIVER_ADDRESS',
-      asset: product.asset,
-      maxAmountRequired: product.amount,
-      facilitatorUrl: appConfig.x402.facilitatorUrl ?? 'configure X402_FACILITATOR_URL',
-      description: product.description,
-      mimeType: 'application/json',
-      output: product.output,
-    },
+    paymentRequiredHeader: 'PAYMENT-REQUIRED',
+    paymentSignatureHeader: 'PAYMENT-SIGNATURE',
+    paymentResponseHeader: 'PAYMENT-RESPONSE',
+    paymentRequiredEncoded: encodeBase64Json(officialPaymentRequired),
+    officialPaymentRequired,
+    requirements,
     safety: {
       phase1Safe: true,
       settlementBroadcastEnabled: false,
@@ -138,9 +187,67 @@ export function createX402Quote(input: X402QuoteInput) {
   };
 }
 
-export function verifyX402Receipt(input: X402ReceiptInput) {
+export async function verifyX402Receipt(input: X402ReceiptInput): Promise<X402VerificationResult> {
   const hasPayload = Boolean(input.paymentPayload ?? input.receipt);
   const devAccepted = appConfig.x402.devAcceptUnsignedReceipt && hasPayload && Boolean(input.quoteId);
+
+  const nativePhRsVerification = await verifyNativePhRsReceipt(input);
+  if (nativePhRsVerification) {
+    return nativePhRsVerification;
+  }
+
+  if (appConfig.x402.enabled && appConfig.x402.facilitatorUrl && input.paymentPayload && input.paymentRequirements) {
+    const facilitatorUrl = appConfig.x402.facilitatorUrl.replace(/\/+$/, '');
+    try {
+      const response = await fetch(`${facilitatorUrl}/verify`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          paymentPayload: input.paymentPayload,
+          paymentRequirements: input.paymentRequirements,
+        }),
+      });
+      const data: unknown = await response.json().catch(() => ({
+        error: `Facilitator returned HTTP ${response.status} with a non-JSON body.`,
+      }));
+      const verified = isFacilitatorVerified(data);
+      return {
+        success: true,
+        verified,
+        mode: 'facilitator-verify-delegated',
+        quoteId: input.quoteId,
+        settlementBroadcastEnabled: false,
+        onChainWritesEnabled: false,
+        facilitator: {
+          url: facilitatorUrl,
+          delegated: true,
+          response: data,
+        },
+        reason: verified
+          ? 'The configured x402 facilitator accepted the payment payload. This Skill still does not call /settle or broadcast transactions.'
+          : 'The configured x402 facilitator did not verify the payment payload.',
+        nextStep: verified
+          ? 'Return the protected response and attach PAYMENT-RESPONSE metadata, or use a separate payment service for settlement.'
+          : 'Return 402 payment requirements and ask the client to submit a valid PAYMENT-SIGNATURE payload.',
+      };
+    } catch (error) {
+      return {
+        success: true,
+        verified: false,
+        mode: 'facilitator-verify-error',
+        quoteId: input.quoteId,
+        settlementBroadcastEnabled: false,
+        onChainWritesEnabled: false,
+        facilitator: {
+          url: facilitatorUrl,
+          delegated: true,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        reason: 'The configured x402 facilitator could not be reached or returned an invalid response.',
+        nextStep: 'Check X402_FACILITATOR_URL and facilitator health, then retry the paid request.',
+      };
+    }
+  }
 
   return {
     success: true,
@@ -158,6 +265,191 @@ export function verifyX402Receipt(input: X402ReceiptInput) {
   };
 }
 
+async function verifyNativePhRsReceipt(input: X402ReceiptInput): Promise<X402VerificationResult | undefined> {
+  const payload = readPaymentRecord(input.paymentPayload) ?? readPaymentRecord(input.receipt);
+  const requirements = readRecord(input.paymentRequirements);
+  if (!payload || !requirements) return undefined;
+
+  const asset = String(requirements.asset ?? '').toUpperCase();
+  if (asset !== 'PHRS') return undefined;
+
+  const transactionHash = readTransactionHash(payload);
+  if (!transactionHash) return undefined;
+
+  const expectedTo = readAddress(requirements.payTo);
+  const requiredAmount = readRequiredPhRsAmount(requirements);
+  const binding = paymentBinding(input.quoteId, requirements);
+  if (!expectedTo || requiredAmount === undefined) {
+    return nativePhRsFailure(input.quoteId, transactionHash, 'native-phrs-receipt-invalid-requirements', binding);
+  }
+
+  const expectedPayer = readAddress(payload.payer ?? payload.from);
+  const provider = getPharosProvider();
+  const [transaction, receipt] = await Promise.all([
+    provider.getTransaction(transactionHash),
+    provider.getTransactionReceipt(transactionHash),
+  ]);
+
+  if (!transaction || !receipt) {
+    return nativePhRsFailure(input.quoteId, transactionHash, 'native-phrs-transaction-not-found-or-pending', binding);
+  }
+
+  const actualTo = readAddress(transaction.to);
+  const actualFrom = readAddress(transaction.from);
+  const actualChainId = Number(transaction.chainId);
+
+  if (receipt.status !== 1) {
+    return nativePhRsFailure(input.quoteId, transactionHash, 'native-phrs-transaction-failed', binding);
+  }
+  if (actualChainId !== appConfig.pharosChainId) {
+    return nativePhRsFailure(input.quoteId, transactionHash, `native-phrs-chain-mismatch-${actualChainId}`, binding);
+  }
+  if (!actualTo || actualTo !== expectedTo) {
+    return nativePhRsFailure(input.quoteId, transactionHash, 'native-phrs-recipient-mismatch', binding);
+  }
+  if (expectedPayer && actualFrom !== expectedPayer) {
+    return nativePhRsFailure(input.quoteId, transactionHash, 'native-phrs-payer-mismatch', binding);
+  }
+  if (transaction.value < requiredAmount) {
+    return nativePhRsFailure(input.quoteId, transactionHash, 'native-phrs-amount-too-low', binding);
+  }
+
+  const replayReason = registerNativePhRsPaymentUse(transactionHash, binding);
+  if (replayReason) {
+    return nativePhRsFailure(input.quoteId, transactionHash, replayReason, binding);
+  }
+
+  return {
+    success: true,
+    verified: true,
+    mode: 'native-phrs-receipt-verified',
+    quoteId: input.quoteId,
+    settlementBroadcastEnabled: false,
+    onChainWritesEnabled: false,
+    payment: {
+      asset: 'PHRS',
+      transactionHash,
+      from: actualFrom ?? transaction.from,
+      to: actualTo ?? transaction.to ?? '',
+      value: formatEther(transaction.value),
+      valueWei: transaction.value.toString(),
+      requiredValue: formatEther(requiredAmount),
+      requiredValueWei: requiredAmount.toString(),
+      blockNumber: receipt.blockNumber,
+      binding,
+      replayProtected: true,
+    },
+    reason: 'A native PHRS transfer receipt was verified on Pharos Atlantic against the x402 payment requirements and bound to this quote/resource.',
+    nextStep: 'Return the protected response and attach PAYMENT-RESPONSE metadata. This Skill verified an existing transaction and did not broadcast settlement.',
+  };
+}
+
+function nativePhRsFailure(quoteId: string | undefined, transactionHash: string, reason: string, binding = 'unbound'): X402VerificationResult {
+  return {
+    success: true,
+    verified: false,
+    mode: 'native-phrs-receipt-rejected',
+    quoteId,
+    settlementBroadcastEnabled: false,
+    onChainWritesEnabled: false,
+    payment: {
+      asset: 'PHRS',
+      transactionHash,
+      from: '',
+      to: '',
+      value: '0',
+      valueWei: '0',
+      requiredValue: appConfig.x402.defaultAmount,
+      requiredValueWei: parseEther(appConfig.x402.defaultAmount).toString(),
+      blockNumber: 0,
+      binding,
+      replayProtected: true,
+    },
+    reason,
+    nextStep: 'Submit a confirmed Pharos Atlantic native PHRS transfer hash that pays the quoted payTo address with at least the quoted amount.',
+  };
+}
+
+function registerNativePhRsPaymentUse(transactionHash: string, binding: string): string | undefined {
+  const normalizedHash = transactionHash.toLowerCase();
+  const previousBinding = nativePhRsPaymentUseByTx.get(normalizedHash);
+  if (previousBinding && previousBinding !== binding) {
+    return 'native-phrs-transaction-already-bound-to-different-requirements';
+  }
+  nativePhRsPaymentUseByTx.set(normalizedHash, binding);
+  return undefined;
+}
+
+function paymentBinding(quoteId: string | undefined, requirements: Record<string, unknown>) {
+  return hashQuote([
+    quoteId ?? 'no-quote',
+    String(requirements.network ?? appConfig.x402.network),
+    String(requirements.chainId ?? appConfig.x402.chainId),
+    String(requirements.resource ?? 'unknown-resource'),
+    String(requirements.method ?? 'GET'),
+    String(requirements.payTo ?? ''),
+    String(requirements.asset ?? ''),
+    String(requirements.price ?? requirements.maxAmountRequired ?? requirements.amount ?? ''),
+  ].join('|'));
+}
+
+function readRecord(value: unknown): Record<string, unknown> | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+  return value as Record<string, unknown>;
+}
+
+function readPaymentRecord(value: unknown): Record<string, unknown> | undefined {
+  if (typeof value === 'string' && /^0x[0-9a-fA-F]{64}$/.test(value.trim())) {
+    return { txHash: value.trim() };
+  }
+  return readRecord(value);
+}
+
+function readTransactionHash(value: Record<string, unknown>) {
+  const raw = value.txHash ?? value.transactionHash ?? value.transaction ?? value.hash ?? value.tx_hash;
+  if (typeof raw !== 'string') return undefined;
+  const trimmed = raw.trim();
+  return /^0x[0-9a-fA-F]{64}$/.test(trimmed) ? trimmed : undefined;
+}
+
+function readAddress(value: unknown) {
+  if (typeof value !== 'string') return undefined;
+  try {
+    return getAddress(value);
+  } catch {
+    return undefined;
+  }
+}
+
+function readRequiredPhRsAmount(requirements: Record<string, unknown>) {
+  const raw = requirements.price ?? requirements.maxAmountRequired ?? requirements.amount;
+  if (typeof raw !== 'string' && typeof raw !== 'number') return undefined;
+  try {
+    return parseEther(String(raw));
+  } catch {
+    return undefined;
+  }
+}
+
 function hashQuote(input: string) {
   return `x402-${createHash('sha256').update(input).digest('hex').slice(0, 16)}`;
+}
+
+export function encodeBase64Json(value: unknown) {
+  return Buffer.from(JSON.stringify(value), 'utf8').toString('base64');
+}
+
+export function decodeBase64Json(value?: string): unknown {
+  if (!value) return undefined;
+  try {
+    return JSON.parse(Buffer.from(value, 'base64').toString('utf8'));
+  } catch {
+    return undefined;
+  }
+}
+
+function isFacilitatorVerified(value: unknown) {
+  if (!value || typeof value !== 'object') return false;
+  const record = value as Record<string, unknown>;
+  return record.verified === true || record.valid === true || record.success === true;
 }

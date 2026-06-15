@@ -313,8 +313,14 @@ function buildDataQuality(params: {
   const endTime = params.candles.at(-1)?.time ?? startTime;
   const expectedCandles = expectedCandleCount(startTime, endTime, params.interval.stepMs);
   const observed = params.candles.length;
+  const deterministicSample = params.source === 'deterministic-sample';
+  const purpose: 'workflow_validation' | 'user_provided_research' = deterministicSample ? 'workflow_validation' : 'user_provided_research';
   return {
     source: params.source,
+    dataSource: params.source,
+    purpose,
+    marketEvidence: !deterministicSample,
+    notMarketEvidence: deterministicSample,
     coverageComplete: params.coverageComplete,
     resampled: params.resampled,
     originalCandleCount: params.originalCandleCount,

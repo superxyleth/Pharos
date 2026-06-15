@@ -1,5 +1,7 @@
 # Pharos Quant Strategy Lifecycle Skill
 
+[![CI](https://github.com/superxyleth/Pharos/actions/workflows/ci.yml/badge.svg)](https://github.com/superxyleth/Pharos/actions/workflows/ci.yml)
+
 Pharos Quant Strategy Lifecycle Skill is a Phase 1 MCP Skill that lets AI Agents generate, validate, backtest, simulate, and export reusable PHRS strategy artifacts on Pharos Atlantic Testnet, with no live trading or transaction broadcasting.
 
 ## Judge Quick Test
@@ -86,6 +88,8 @@ Expected checks:
 - `quant_loop_run` returns 7 backtest periods.
 - `executionModeSummary.providerTimeoutMs = 90000`.
 - `artifact.artifactId` and `artifact.codeHash` are present.
+- `safetySummary.phase1Safe = true`.
+- `dataSourceSummary.type = deterministic-sample` for the deterministic judging path.
 - `liveTrading.enabled = false`.
 - `broadcastTransactions = false`.
 - `onChainWrites = false`.
@@ -156,6 +160,8 @@ This layer is disabled by default and does not affect the core Phase 1 MCP revie
 
 ```text
 X402_ENABLED=false
+X402_NETWORK=eip155:688689
+X402_DEFAULT_ASSET=PHRS
 ```
 
 Public x402 endpoints:
@@ -170,6 +176,16 @@ POST /paid/quant-report
 POST /paid/dry-run-plan
 ```
 
+Official x402 SDK demo scripts:
+
+```bash
+npm run x402:facilitator
+npm run x402:server
+npm run x402:client
+```
+
+The official EVM `exact` flow requires an ERC20 `X402_ASSET_ADDRESS`; native PHRS transfers are useful for local receipt testing but are not the same as SDK settlement unless the facilitator supports native PHRS.
+
 Optional MCP tools:
 
 - `x402_payment_status`
@@ -179,7 +195,12 @@ Optional MCP tools:
 
 Safety:
 
+- PHRS is used as the default local test asset for this scaffold; production x402 settlement should confirm facilitator support for native PHRS or use a supported ERC20 asset.
+- protected routes return `PAYMENT-REQUIRED` headers and accept `PAYMENT-SIGNATURE` for facilitator verification.
+- public paid routes also verify confirmed Pharos Atlantic native PHRS transaction hashes for the quoted `payTo`, amount, and resource binding.
+- native PHRS receipt verification binds a transaction hash to one quote/resource/method/payTo/amount tuple to prevent cross-resource replay.
 - x402 does not broadcast payments in this Phase 1 Skill.
+- x402 does not call facilitator `/settle`.
 - x402 does not sign transactions.
 - x402 does not execute trades.
 - paid routes return HTTP `402 Payment Required` requirements unless a separate payment service verifies settlement.

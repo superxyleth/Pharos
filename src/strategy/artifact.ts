@@ -14,6 +14,15 @@ export function exportStrategyArtifact(params: {
   const validation = validateStrategyCode(params.code);
   const codeHash = `sha256:${createHash('sha256').update(params.code).digest('hex')}`;
   const artifactId = `pharos-${createHash('sha256').update(`${params.name}:${codeHash}`).digest('hex').slice(0, 16)}`;
+  const backtests = params.backtests ?? [];
+  const safetySummary = {
+    phase1Safe: true,
+    researchOnly: true,
+    liveTradingEnabled: false,
+    broadcastTransactions: false,
+    onChainWrites: false,
+    privateKeyExposure: false,
+  };
   return {
     schemaVersion: 'pharos.quant.skill.artifact.v1',
     artifactId,
@@ -27,11 +36,16 @@ export function exportStrategyArtifact(params: {
     ...(params.includeCode === false ? {} : { code: params.code }),
     validation,
     detailMode: params.includeCode === false ? 'summary' : 'full',
-    backtestSummary: (params.backtests ?? []).map((result) => ({
+    dataSourceSummary: summarizeDataSource(backtests),
+    backtestSummary: backtests.map((result) => ({
       period: result.period,
       timeframe: result.timeframe,
       coverage: result.coverage,
       candleSource: result.candleSource,
+      dataSource: result.dataQuality.dataSource,
+      dataSourcePurpose: result.dataQuality.purpose,
+      marketEvidence: result.dataQuality.marketEvidence,
+      notMarketEvidence: result.dataQuality.notMarketEvidence,
       startTime: result.startTime,
       endTime: result.endTime,
       dataQuality: result.dataQuality,
@@ -55,6 +69,7 @@ export function exportStrategyArtifact(params: {
       capitalEfficiencyScore: result.capitalEfficiencyScore,
       strategyQuality: result.strategyQuality,
     })),
+    safetySummary,
     safety: {
       researchOnly: true,
       liveTrading: { enabled: false },
@@ -72,5 +87,31 @@ export function exportStrategyArtifact(params: {
       requiredContext: ['candle', 'candles', 'indicators', 'index', 'state', 'position', 'initialCapital', 'equity'],
       expectedDecision: "{ action: 'BUY'|'SELL'|'HOLD', amountUsd?, fraction?, reason?, statePatch? }",
     },
+  };
+}
+
+function summarizeDataSource(backtests: BacktestResult[]) {
+  if (!backtests.length) {
+    return {
+      sources: [],
+      type: 'not-provided',
+      purpose: 'not-provided',
+      marketEvidence: false,
+      notMarketEvidence: true,
+      note: 'No backtest data was attached to this artifact.',
+    };
+  }
+  const sources = [...new Set(backtests.map((result) => result.dataQuality.dataSource))];
+  const marketEvidence = backtests.some((result) => result.dataQuality.marketEvidence);
+  const deterministicOnly = backtests.every((result) => result.dataQuality.notMarketEvidence);
+  return {
+    sources,
+    type: deterministicOnly ? 'deterministic-sample' : sources.join(','),
+    purpose: deterministicOnly ? 'workflow_validation' : 'user_provided_research',
+    marketEvidence,
+    notMarketEvidence: !marketEvidence,
+    note: deterministicOnly
+      ? 'Backtests use deterministic sample candles to validate the Agent workflow and risk diagnostics; they are not market evidence.'
+      : 'Backtests include caller-provided candles. Validate data provenance before treating results as market evidence.',
   };
 }

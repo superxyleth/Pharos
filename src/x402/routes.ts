@@ -1,18 +1,28 @@
 import type { Express, Request, Response } from 'express';
 import { appConfig } from '../config.js';
-import { createX402Quote, getX402Products, getX402Status, verifyX402Receipt } from './catalog.js';
+import {
+  createX402Quote,
+  decodeBase64Json,
+  encodeBase64Json,
+  getX402Products,
+  getX402Status,
+  verifyX402Receipt,
+} from './catalog.js';
 
 function readRequestBody(req: Request) {
   return req.body ?? {};
 }
 
 function sendPaymentRequired(res: Response, quote: ReturnType<typeof createX402Quote>) {
-  return res.status(402).json({
-    success: false,
-    error: 'payment_required',
-    paymentRequired: true,
-    x402: quote,
-  });
+  return res
+    .status(402)
+    .set('PAYMENT-REQUIRED', quote.paymentRequiredEncoded)
+    .json({
+      success: false,
+      error: 'payment_required',
+      paymentRequired: true,
+      x402: quote,
+    });
 }
 
 function sendServiceUnavailable(res: Response) {
@@ -27,6 +37,46 @@ function sendServiceUnavailable(res: Response) {
 function canServeDemoReceipt(req: Request) {
   const header = req.header('x-x402-demo-receipt');
   return appConfig.x402.devAcceptUnsignedReceipt && header === 'accepted';
+}
+
+function readPaymentSignature(req: Request) {
+  const header = req.header('PAYMENT-SIGNATURE');
+  return decodeBase64Json(header) ?? header;
+}
+
+async function verifyPaidRequest(req: Request, quote: ReturnType<typeof createX402Quote>) {
+  if (canServeDemoReceipt(req)) {
+    return verifyX402Receipt({
+      quoteId: quote.quoteId,
+      receipt: { demo: true },
+      paymentRequirements: quote.requirements,
+    });
+  }
+
+  const paymentPayload = readPaymentSignature(req);
+  if (!paymentPayload) {
+    return undefined;
+  }
+
+  return verifyX402Receipt({
+    quoteId: quote.quoteId,
+    paymentPayload,
+    paymentRequirements: quote.requirements,
+  });
+}
+
+function attachPaymentResponse(res: Response, verification: Awaited<ReturnType<typeof verifyX402Receipt>>) {
+  res.set(
+    'PAYMENT-RESPONSE',
+    encodeBase64Json({
+      verified: verification.verified,
+      mode: verification.mode,
+      quoteId: verification.quoteId,
+      settlementBroadcastEnabled: verification.settlementBroadcastEnabled,
+      onChainWritesEnabled: verification.onChainWritesEnabled,
+      payment: verification.payment,
+    }),
+  );
 }
 
 export function registerX402Routes(app: Express) {
@@ -55,27 +105,30 @@ export function registerX402Routes(app: Express) {
     }
   });
 
-  app.post('/x402/verify', (req, res) => {
+  app.post('/x402/verify', async (req, res) => {
     const body = readRequestBody(req);
     res.json(
-      verifyX402Receipt({
+      await verifyX402Receipt({
         quoteId: body.quoteId ? String(body.quoteId) : undefined,
         paymentPayload: body.paymentPayload,
+        paymentRequirements: body.paymentRequirements,
         receipt: body.receipt,
       }),
     );
   });
 
-  app.get('/paid/artifacts/:artifactId', (req, res) => {
+  app.get('/paid/artifacts/:artifactId', async (req, res) => {
     const quote = createX402Quote({
       productId: 'paid-full-artifact',
       resource: `/paid/artifacts/${req.params.artifactId}`,
       method: 'GET',
     });
 
-    if (!canServeDemoReceipt(req)) {
+    const verification = await verifyPaidRequest(req, quote);
+    if (!verification?.verified) {
       return sendPaymentRequired(res, quote);
     }
+    attachPaymentResponse(res, verification);
 
     return res.json({
       success: true,
@@ -86,16 +139,18 @@ export function registerX402Routes(app: Express) {
     });
   });
 
-  app.post('/paid/quant-report', (req, res) => {
+  app.post('/paid/quant-report', async (req, res) => {
     const quote = createX402Quote({
       productId: 'paid-quant-report',
       resource: '/paid/quant-report',
       method: 'POST',
     });
 
-    if (!canServeDemoReceipt(req)) {
+    const verification = await verifyPaidRequest(req, quote);
+    if (!verification?.verified) {
       return sendPaymentRequired(res, quote);
     }
+    attachPaymentResponse(res, verification);
 
     const body = readRequestBody(req);
     return res.json({
@@ -110,16 +165,18 @@ export function registerX402Routes(app: Express) {
     });
   });
 
-  app.post('/paid/dry-run-plan', (req, res) => {
+  app.post('/paid/dry-run-plan', async (req, res) => {
     const quote = createX402Quote({
       productId: 'paid-dry-run-plan',
       resource: '/paid/dry-run-plan',
       method: 'POST',
     });
 
-    if (!canServeDemoReceipt(req)) {
+    const verification = await verifyPaidRequest(req, quote);
+    if (!verification?.verified) {
       return sendPaymentRequired(res, quote);
     }
+    attachPaymentResponse(res, verification);
 
     const body = readRequestBody(req);
     return res.json({

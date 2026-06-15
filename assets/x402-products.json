@@ -1,6 +1,6 @@
 {
   "protocol": "x402",
-  "network": "pharos-atlantic-testnet",
+  "network": "eip155:688689",
   "chainId": 688689,
   "enabledByDefault": false,
   "settlementBroadcastEnabled": false,

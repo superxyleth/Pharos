@@ -9,6 +9,15 @@ import { createSampleCandles } from '../strategy/sampleData.js';
 import { simulateStrategy } from '../strategy/simulator.js';
 import { validateStrategyCode } from '../strategy/validate.js';
 
+const phase1SafetySummary = {
+  phase1Safe: true,
+  researchOnly: true,
+  liveTradingEnabled: false,
+  broadcastTransactions: false,
+  onChainWrites: false,
+  privateKeyExposure: false,
+};
+
 export function registerLoopTools(server: McpServer) {
   server.registerTool(
     'quant_loop_run',
@@ -126,6 +135,8 @@ export function registerLoopTools(server: McpServer) {
         return textResult({
           success: true,
           stage: 'phase1_skill_closed_loop',
+          safetySummary: phase1SafetySummary,
+          dataSourceSummary: summarizeDataSource(backtests),
           steps,
           generated,
           backtestSummary: backtests.map((result) => ({
@@ -133,6 +144,10 @@ export function registerLoopTools(server: McpServer) {
             timeframe: result.timeframe,
             coverage: result.coverage,
             candleSource: result.candleSource,
+            dataSource: result.dataQuality.dataSource,
+            dataSourcePurpose: result.dataQuality.purpose,
+            marketEvidence: result.dataQuality.marketEvidence,
+            notMarketEvidence: result.dataQuality.notMarketEvidence,
             startTime: result.startTime,
             endTime: result.endTime,
             dataQuality: result.dataQuality,
@@ -176,4 +191,20 @@ export function registerLoopTools(server: McpServer) {
       }
     },
   );
+}
+
+function summarizeDataSource(backtests: Array<{ dataQuality: { dataSource: string; purpose: string; marketEvidence: boolean; notMarketEvidence: boolean } }>) {
+  const sources = [...new Set(backtests.map((result) => result.dataQuality.dataSource))];
+  const marketEvidence = backtests.some((result) => result.dataQuality.marketEvidence);
+  const deterministicOnly = backtests.every((result) => result.dataQuality.notMarketEvidence);
+  return {
+    sources,
+    type: deterministicOnly ? 'deterministic-sample' : sources.join(','),
+    purpose: deterministicOnly ? 'workflow_validation' : 'user_provided_research',
+    marketEvidence,
+    notMarketEvidence: !marketEvidence,
+    note: deterministicOnly
+      ? 'Backtests use deterministic sample candles to validate the Agent workflow and risk diagnostics; they are not market evidence.'
+      : 'Backtests include caller-provided candles. Validate data provenance before treating results as market evidence.',
+  };
 }

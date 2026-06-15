@@ -57,7 +57,7 @@ export function getConfig(): AppConfig {
     port: readNumber('PORT', 3001),
     x402: {
       enabled: readBoolean('X402_ENABLED', false),
-      network: process.env.X402_NETWORK?.trim() || 'pharos-atlantic-testnet',
+      network: process.env.X402_NETWORK?.trim() || 'eip155:688689',
       chainId: readNumber('X402_CHAIN_ID', readNumber('PHAROS_CHAIN_ID', 688689)),
       receiverAddress: process.env.X402_RECEIVER_ADDRESS?.trim(),
       facilitatorUrl: process.env.X402_FACILITATOR_URL?.trim(),

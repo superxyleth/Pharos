@@ -17,6 +17,10 @@ export interface StrategyIndicators {
 
 export interface BacktestDataQuality {
   source: string;
+  dataSource: string;
+  purpose: 'workflow_validation' | 'user_provided_research';
+  marketEvidence: boolean;
+  notMarketEvidence: boolean;
   coverageComplete: boolean;
   resampled: boolean;
   originalCandleCount: number;

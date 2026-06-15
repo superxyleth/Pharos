@@ -26,6 +26,10 @@ const backtestResultSchema = z.object({
   timeframe: z.string().optional(),
   coverage: z.string().optional(),
   candleSource: z.string().optional(),
+  dataSource: z.string().optional(),
+  dataSourcePurpose: z.string().optional(),
+  marketEvidence: z.boolean().optional(),
+  notMarketEvidence: z.boolean().optional(),
   startTime: z.number().optional(),
   endTime: z.number().optional(),
   dataQuality: z.record(z.string(), z.unknown()).optional(),
@@ -151,6 +155,7 @@ export function registerStrategyTools(server: McpServer) {
         const results = runBacktestMatrix({ code, candles, symbol, initialCapital });
         return textResult({
           success: true,
+          dataSourceSummary: summarizeDataSource(results),
           periods: results.map(summarizeBacktest),
           ...(includeDetails ? { results } : {}),
         });
@@ -247,6 +252,10 @@ function summarizeBacktest(result: ReturnType<typeof runBacktest>) {
     timeframe: result.timeframe,
     coverage: result.coverage,
     candleSource: result.candleSource,
+    dataSource: result.dataQuality.dataSource,
+    dataSourcePurpose: result.dataQuality.purpose,
+    marketEvidence: result.dataQuality.marketEvidence,
+    notMarketEvidence: result.dataQuality.notMarketEvidence,
     startTime: result.startTime,
     endTime: result.endTime,
     dataQuality: result.dataQuality,
@@ -302,6 +311,10 @@ function toBacktestResult(result: ParsedBacktestResult): BacktestResult {
     endTime: result.endTime ?? 0,
     dataQuality: result.dataQuality as any ?? {
       source: 'unknown',
+      dataSource: 'unknown',
+      purpose: 'user_provided_research',
+      marketEvidence: false,
+      notMarketEvidence: true,
       coverageComplete: false,
       resampled: false,
       originalCandleCount: result.candleCount,
@@ -333,5 +346,21 @@ function toBacktestResult(result: ParsedBacktestResult): BacktestResult {
     },
     trades: result.trades ?? [],
     equityCurve: result.equityCurve ?? [],
+  };
+}
+
+function summarizeDataSource(results: Array<{ dataQuality: { dataSource: string; purpose: string; marketEvidence: boolean; notMarketEvidence: boolean } }>) {
+  const sources = [...new Set(results.map((result) => result.dataQuality.dataSource))];
+  const marketEvidence = results.some((result) => result.dataQuality.marketEvidence);
+  const deterministicOnly = results.every((result) => result.dataQuality.notMarketEvidence);
+  return {
+    sources,
+    type: deterministicOnly ? 'deterministic-sample' : sources.join(','),
+    purpose: deterministicOnly ? 'workflow_validation' : 'user_provided_research',
+    marketEvidence,
+    notMarketEvidence: !marketEvidence,
+    note: deterministicOnly
+      ? 'Backtests use deterministic sample candles to validate the Agent workflow and risk diagnostics; they are not market evidence.'
+      : 'Backtests include caller-provided candles. Validate data provenance before treating results as market evidence.',
   };
 }
