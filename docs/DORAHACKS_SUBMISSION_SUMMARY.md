@@ -162,7 +162,7 @@ npm test
 
 Latest observed results:
 
-- `validate:skill`: 97 checks passed.
+- `validate:skill`: 115 checks passed.
 - `npm test`: typecheck, backtest smoke, and Pharos read-only smoke passed.
 - Public health endpoint responded successfully.
 - Public `tools/list` exposed all 10 core tools and optional x402 payment-prep tools.
