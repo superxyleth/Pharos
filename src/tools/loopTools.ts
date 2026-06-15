@@ -5,6 +5,7 @@ import { adviseStrategy } from '../strategy/advisor.js';
 import { runBacktestMatrix } from '../strategy/backtest.js';
 import { exportStrategyArtifact } from '../strategy/artifact.js';
 import { deterministicStrategyTemplate, generateStrategyCode } from '../strategy/generation.js';
+import { loadPreferredMarketCandles, summarizePreferredMarketData } from '../strategy/marketData.js';
 import { createSampleCandles } from '../strategy/sampleData.js';
 import { simulateStrategy } from '../strategy/simulator.js';
 import { validateStrategyCode } from '../strategy/validate.js';
@@ -25,13 +26,13 @@ export function registerLoopTools(server: McpServer) {
       description: 'Run the Phase 1 closed loop: generate strategy, validate, multi-period backtest, advise, simulate, and export an artifact. No live trading.',
       inputSchema: {
         description: z.string().min(1).describe('Natural-language quant strategy request.'),
-        symbol: z.string().optional().describe('Target symbol, default PHRS.'),
+        symbol: z.string().optional().describe('Target symbol, default PROS when local OKX market data is available.'),
         chain: z.string().optional().describe('Target chain, default pharos-atlantic-testnet.'),
         initialCapital: z.number().positive().optional().describe('Research capital.'),
         useOpenAI: z.boolean().optional().describe('Use OpenAI generation when configured; fallback template is used otherwise.'),
       },
     },
-    async ({ description, symbol = 'PHRS', chain = 'pharos-atlantic-testnet', initialCapital = 1000, useOpenAI = true }) => {
+    async ({ description, symbol = 'PROS', chain = 'pharos-atlantic-testnet', initialCapital = 1000, useOpenAI = true }) => {
       try {
         const steps: Array<Record<string, unknown>> = [];
         let generated;
@@ -104,9 +105,10 @@ export function registerLoopTools(server: McpServer) {
         });
 
         const simulateStarted = Date.now();
+        const marketCandles = loadPreferredMarketCandles(symbol)?.candles;
         const simulation = simulateStrategy({
           code: generated.code,
-          candles: createSampleCandles({ limit: 30 }),
+          candles: marketCandles?.slice(-30) ?? createSampleCandles({ limit: 30 }),
           initialCapital,
         });
         steps.push({
@@ -136,6 +138,7 @@ export function registerLoopTools(server: McpServer) {
           success: true,
           stage: 'phase1_skill_closed_loop',
           safetySummary: phase1SafetySummary,
+          marketDataSummary: summarizePreferredMarketData(),
           dataSourceSummary: summarizeDataSource(backtests),
           steps,
           generated,

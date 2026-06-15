@@ -1,0 +1,25 @@
+{
+  "jsonrpc": "2.0",
+  "id": 21,
+  "method": "tools/call",
+  "params": {
+    "name": "strategy_backtest_matrix",
+    "arguments": {
+      "symbol": "PHRS",
+      "initialCapital": 1000,
+      "code": "exports.evaluate = function(ctx) {\n  if (ctx.index < 2) return { action: 'HOLD', reason: 'warmup' };\n  const previous = ctx.candles[ctx.index - 1];\n  if (ctx.candle.close > previous.close * 1.01) return { action: 'BUY', amountUsd: 50, reason: 'external candle momentum' };\n  if (ctx.position.base > 0 && ctx.candle.close < previous.close * 0.99) return { action: 'SELL', fraction: 1, reason: 'external candle risk-off' };\n  return { action: 'HOLD', reason: 'no signal' };\n};",
+      "candles": [
+        { "time": 1717200000000, "open": 1.0000, "high": 1.0120, "low": 0.9950, "close": 1.0060, "volume": 12000 },
+        { "time": 1717203600000, "open": 1.0060, "high": 1.0180, "low": 1.0000, "close": 1.0150, "volume": 14100 },
+        { "time": 1717207200000, "open": 1.0150, "high": 1.0340, "low": 1.0120, "close": 1.0300, "volume": 18300 },
+        { "time": 1717210800000, "open": 1.0300, "high": 1.0400, "low": 1.0200, "close": 1.0240, "volume": 15500 },
+        { "time": 1717214400000, "open": 1.0240, "high": 1.0280, "low": 1.0000, "close": 1.0020, "volume": 20100 },
+        { "time": 1717218000000, "open": 1.0020, "high": 1.0110, "low": 0.9920, "close": 1.0090, "volume": 16700 },
+        { "time": 1717221600000, "open": 1.0090, "high": 1.0260, "low": 1.0060, "close": 1.0230, "volume": 17400 },
+        { "time": 1717225200000, "open": 1.0230, "high": 1.0310, "low": 1.0140, "close": 1.0180, "volume": 14900 },
+        { "time": 1717228800000, "open": 1.0180, "high": 1.0440, "low": 1.0160, "close": 1.0380, "volume": 19200 },
+        { "time": 1717232400000, "open": 1.0380, "high": 1.0460, "low": 1.0260, "close": 1.0320, "volume": 15800 }
+      ]
+    }
+  }
+}

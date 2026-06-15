@@ -82,7 +82,7 @@ It also exposes 4 optional x402 payment-prep tools:
 - `x402_quote`
 - `x402_receipt_verify`
 
-The x402 tools are disabled-by-default scaffolding for future paid resources. They do not settle payments, sign transactions, broadcast payments, or execute trades.
+The x402 tools are optional scaffolding for future paid resources. They do not settle payments, sign transactions, broadcast payments, or execute trades, and the core MCP review path remains free.
 
 ## Core Capability
 
@@ -95,7 +95,7 @@ This Skill provides a complete research lifecycle that an Agent can compose:
 5. Return trade activity diagnostics, including no-trade explanations, entry signal counts, and blocked signal counts.
 6. Produce risk-aware improvement advice.
 7. Simulate decisions without execution.
-8. Export a reusable artifact with `artifactId`, `codeHash`, summary metrics, and fixed Phase 1 safety flags.
+8. Export a reusable artifact with `result.artifact.artifactId`, `result.artifact.codeHash`, summary metrics, and fixed Phase 1 safety flags.
 
 ## Phase 1 Safety Boundary
 
@@ -138,8 +138,9 @@ Node.js 20+
 Local package checks:
 
 ```bash
-npm install
+npm install --include=dev
 npm run validate:skill
+npm run typecheck
 npm test
 ```
 
@@ -193,10 +194,11 @@ This Skill includes an optional x402-style paid gateway skeleton for future mone
 - `POST /paid/quant-report`
 - `POST /paid/dry-run-plan`
 
-Default status:
+Public review status:
 
 ```text
-X402_ENABLED=false
+settlementBroadcastEnabled=false
+onChainWritesEnabled=false
 ```
 
 The x402 layer does not affect the free Phase 1 review path. It produces payment requirements and receipt-verification scaffolding only; production settlement should be delegated to a separate x402 payment service or future Phase 2 payment Skill.

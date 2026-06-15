@@ -102,8 +102,8 @@ Use the generated strategy code and the matrix result from previous calls.
 
 Expected checks:
 
-- response contains `artifactId`
-- response contains `codeHash`
+- response payload contains `result.artifact.artifactId`
+- response payload contains `result.artifact.codeHash`
 - response does not embed the full strategy code body
 - response keeps the Phase 1 safety notice
 

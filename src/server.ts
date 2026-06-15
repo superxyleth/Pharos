@@ -50,6 +50,8 @@ app.get('/', (_req, res) => {
     coreTools: [
       'pharos_network_status',
       'pharos_wallet_info',
+      'strategy_preset_list',
+      'strategy_preset_get',
       'strategy_generate',
       'strategy_validate',
       'strategy_backtest',

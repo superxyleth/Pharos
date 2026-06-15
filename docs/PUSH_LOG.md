@@ -440,3 +440,44 @@ M  src/tools/x402Tools.ts
 M  src/x402/catalog.ts
 M  src/x402/routes.ts
 ```
+
+### 20260616-014638 add WBTC WETH proxy market candles and judge readiness docs
+
+- Branch: `main`
+- Previous HEAD: `3dfa2f4`
+- Memory tag: `memory/20260616-014638-add-wbtc-weth-proxy-market-candles-and-j`
+- Executed:
+  - Updated `docs/PUSH_LOG.md`
+  - Staged current tracked and untracked safe files
+  - Created a Git commit
+  - Created an annotated memory tag
+  - Pushed branch and tags to `origin`
+- Workspace changes before push:
+```text
+M README.md
+ M SKILL.md
+ M docs/AGENT_EVALUATION_REPORT_2026-06-14.md
+ M docs/DORAHACKS_SUBMISSION_SUMMARY.md
+ M docs/HANDOFF_2026-06-15.md
+ M examples/demo-json-rpc-flow.md
+ M examples/evaluator-prompt.md
+ M package-lock.json
+ M package.json
+ M references/evaluation-guide.md
+ M references/mcp-tools.md
+ M references/x402-payments.md
+ M src/server.ts
+ M src/strategy/backtest.ts
+ M src/strategy/types.ts
+ M src/tools/loopTools.ts
+ M src/tools/strategyTools.ts
+?? assets/market-data/
+?? docs/DEPENDENCY_AUDIT.md
+?? docs/JUDGE_DEMO_60_SECONDS.md
+?? examples/backtest-with-external-candles.json
+?? scripts/build-pros-okx-klines.mjs
+?? scripts/build-wphrs-real-klines.mjs
+?? scripts/build-wphrs-slot0-klines.mjs
+?? src/strategy/marketData.ts
+?? src/strategy/presets.ts
+```

@@ -79,6 +79,8 @@ Expected safety and data-source markers:
 - `safetySummary.phase1Safe = true`
 - `safetySummary.broadcastTransactions = false`
 - `safetySummary.onChainWrites = false`
+- `result.artifact.artifactId` is present
+- `result.artifact.codeHash` is present
 - `dataSourceSummary.type = deterministic-sample` for the deterministic baseline
 - `dataSourceSummary.marketEvidence = false` for deterministic sample candles
 
@@ -101,11 +103,12 @@ Optional x402 check:
 
 Call `x402_payment_status` and confirm:
 
+- core MCP tools remain free and reviewable
 - `settlementBroadcastEnabled = false`
 - `onChainWritesEnabled = false`
 - x402 is optional and does not affect the core Phase 1 review path.
 
-For the public PHRS receipt demo, request `/paid/artifacts/phrs-public-test` without payment and confirm `HTTP 402` plus `PAYMENT-REQUIRED`. After sending `0.01 PHRS` to the quoted receiver, retry with `PAYMENT-SIGNATURE: <tx_hash>` and confirm `PAYMENT-RESPONSE.mode = native-phrs-receipt-verified`.
+For the public x402 route demo, request `/paid/artifacts/pharos-demo` without payment and confirm `HTTP 402` plus `PAYMENT-REQUIRED`. A bogus `/x402/verify` request should return `verified=false` and make clear that this Phase 1 Skill does not perform payment settlement, transaction signing, or transaction broadcast.
 
 Suggested review criteria:
 

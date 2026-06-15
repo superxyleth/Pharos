@@ -28,6 +28,16 @@ export interface BacktestDataQuality {
   missingCandles: number;
   startTime: number;
   endTime: number;
+  datasetId?: string;
+  datasetPath?: string;
+  exchange?: string;
+  market?: string;
+  pair?: string;
+  interval?: string;
+  preferredForBacktest?: boolean;
+  requestedPeriod?: string;
+  coverageNote?: string;
+  limitations?: string[];
 }
 
 export interface StrategyQuality {

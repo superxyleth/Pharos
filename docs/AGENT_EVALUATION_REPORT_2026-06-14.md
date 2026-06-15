@@ -175,8 +175,8 @@ These fields help reviewers distinguish a silent strategy from a failed tool cal
 Observed:
 
 - `detailMode`: `summary`
-- `artifactId` present
-- `codeHash` present
+- `result.artifact.artifactId` present
+- `result.artifact.codeHash` present
 - full strategy code body omitted from the summary artifact
 - safety flags present:
   - `researchOnly = true`

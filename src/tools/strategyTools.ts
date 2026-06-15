@@ -5,6 +5,7 @@ import { adviseStrategy } from '../strategy/advisor.js';
 import { exportStrategyArtifact } from '../strategy/artifact.js';
 import { runBacktest, runBacktestMatrix } from '../strategy/backtest.js';
 import { deterministicStrategyTemplate, generateStrategyCode } from '../strategy/generation.js';
+import { getStrategyPreset, listStrategyPresets } from '../strategy/presets.js';
 import { createSampleCandles } from '../strategy/sampleData.js';
 import { simulateStrategy } from '../strategy/simulator.js';
 import type { BacktestResult } from '../strategy/types.js';
@@ -71,6 +72,32 @@ const backtestInputSchema = z.union([
 ]);
 
 export function registerStrategyTools(server: McpServer) {
+  server.registerTool(
+    'strategy_preset_list',
+    {
+      description: 'List built-in strategy presets, including the guarded PROS DCA preset backed by the current crawled market data.',
+      inputSchema: {},
+    },
+    async () => textResult({ success: true, presets: listStrategyPresets() }),
+  );
+
+  server.registerTool(
+    'strategy_preset_get',
+    {
+      description: 'Get a built-in strategy preset by id.',
+      inputSchema: {
+        id: z.string().min(1).describe('Preset id, such as pros-dca-guarded.'),
+      },
+    },
+    async ({ id }) => {
+      const preset = getStrategyPreset(id);
+      if (!preset) {
+        return errorResult(`Unknown strategy preset: ${id}`);
+      }
+      return textResult({ success: true, preset });
+    },
+  );
+
   server.registerTool(
     'strategy_generate',
     {

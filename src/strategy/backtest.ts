@@ -3,6 +3,8 @@ import { compileStrategy, normalizeDecision } from './sandbox.js';
 import { createSampleCandles, intervalForPeriod } from './sampleData.js';
 import type { PeriodInterval } from './sampleData.js';
 import { precomputeIndicators } from './indicators.js';
+import { loadPreferredMarketCandles } from './marketData.js';
+import type { MarketDataset } from './marketData.js';
 import { maxDrawdownPct, roundMetric, sharpeRatio, totalReturnPct, winRatePct } from './metrics.js';
 import { analyzeStrategyQuality, scoreCapitalEfficiency, scoreRisk, scoreStability } from './quality.js';
 
@@ -19,7 +21,10 @@ export function runBacktest(params: {
 }): BacktestResult {
   const period = params.period ?? '1M';
   const interval = intervalForPeriod(period);
-  const prepared = prepareCandles(params.candles, interval);
+  const prepared = prepareCandles(params.candles, interval, {
+    period,
+    symbol: params.symbol,
+  });
   const candles = prepared.candles;
   if (candles.length < 10) {
     throw new Error('At least 10 candles are required for backtesting.');
@@ -225,8 +230,20 @@ function normalizeCandles(candles: Candle[]): Candle[] {
 function prepareCandles(
   candles: Candle[] | undefined,
   interval: PeriodInterval,
+  context: { period: string; symbol?: string },
 ): { candles: Candle[]; source: string; coverage: string; dataQuality: ReturnType<typeof buildDataQuality> } {
   if (!candles?.length) {
+    const marketData = loadPreferredMarketCandles(context.symbol);
+    if (marketData?.candles.length) {
+      return prepareProvidedCandles(marketData.candles, interval, {
+        source: 'local-market-dataset',
+        dataSource: marketData.dataset.dataSource ?? marketData.dataset.source ?? marketData.dataset.datasetId,
+        originalSource: 'local-market-dataset',
+        dataset: marketData.dataset,
+        period: context.period,
+      });
+    }
+
     const synthetic = normalizeCandles(createSampleCandles(interval));
     return {
       candles: synthetic,
@@ -239,23 +256,45 @@ function prepareCandles(
         originalCandleCount: synthetic.length,
         resampled: false,
         coverageComplete: true,
+        period: context.period,
       }),
     };
   }
 
+  return prepareProvidedCandles(candles, interval, {
+    source: 'provided-candles',
+    dataSource: 'provided-candles',
+    originalSource: 'provided-candles',
+    period: context.period,
+  });
+}
+
+function prepareProvidedCandles(
+  candles: Candle[],
+  interval: PeriodInterval,
+  context: {
+    source: string;
+    dataSource: string;
+    originalSource: string;
+    period: string;
+    dataset?: MarketDataset;
+  },
+): { candles: Candle[]; source: string; coverage: string; dataQuality: ReturnType<typeof buildDataQuality> } {
   const normalized = normalizeCandles(candles);
   if (normalized.length <= interval.limit) {
     return {
       candles: normalized,
-      source: 'provided-input-span',
+      source: context.source === 'local-market-dataset' ? 'local-market-dataset-input-span' : 'provided-input-span',
       coverage: 'provided-input-span',
       dataQuality: buildDataQuality({
         candles: normalized,
         interval,
-        source: 'provided-candles',
+        source: context.dataSource,
         originalCandleCount: normalized.length,
         resampled: false,
         coverageComplete: hasFullTargetCoverage(normalized, interval),
+        dataset: context.dataset,
+        period: context.period,
       }),
     };
   }
@@ -263,15 +302,17 @@ function prepareCandles(
   const resampled = resampleFullCoverage(normalized, interval.limit);
   return {
     candles: resampled,
-    source: 'provided-resampled-input-span',
+    source: context.source === 'local-market-dataset' ? 'local-market-dataset-resampled-input-span' : 'provided-resampled-input-span',
     coverage: 'provided-input-span',
     dataQuality: buildDataQuality({
       candles: resampled,
       interval,
-      source: 'provided-candles',
+      source: context.dataSource,
       originalCandleCount: normalized.length,
       resampled: true,
       coverageComplete: hasFullTargetCoverage(normalized, interval),
+      dataset: context.dataset,
+      period: context.period,
     }),
   };
 }
@@ -308,19 +349,25 @@ function buildDataQuality(params: {
   originalCandleCount: number;
   resampled: boolean;
   coverageComplete: boolean;
+  period: string;
+  dataset?: MarketDataset;
 }) {
   const startTime = params.candles[0]?.time ?? 0;
   const endTime = params.candles.at(-1)?.time ?? startTime;
   const expectedCandles = expectedCandleCount(startTime, endTime, params.interval.stepMs);
   const observed = params.candles.length;
   const deterministicSample = params.source === 'deterministic-sample';
+  const marketEvidence = params.dataset ? Boolean(params.dataset.marketEvidence) : !deterministicSample;
   const purpose: 'workflow_validation' | 'user_provided_research' = deterministicSample ? 'workflow_validation' : 'user_provided_research';
+  const coverageNote = params.coverageComplete
+    ? 'Dataset covers the requested period at the selected adaptive timeframe.'
+    : `Dataset does not cover the full ${params.period} request; the backtest uses only the real candles currently available and does not synthesize missing history.`;
   return {
     source: params.source,
     dataSource: params.source,
     purpose,
-    marketEvidence: !deterministicSample,
-    notMarketEvidence: deterministicSample,
+    marketEvidence,
+    notMarketEvidence: !marketEvidence,
     coverageComplete: params.coverageComplete,
     resampled: params.resampled,
     originalCandleCount: params.originalCandleCount,
@@ -328,6 +375,16 @@ function buildDataQuality(params: {
     missingCandles: Math.max(0, expectedCandles - observed),
     startTime,
     endTime,
+    datasetId: params.dataset?.datasetId,
+    datasetPath: params.dataset?.path,
+    exchange: params.dataset?.exchange,
+    market: params.dataset?.market,
+    pair: params.dataset?.pair,
+    interval: params.dataset?.interval,
+    preferredForBacktest: params.dataset?.preferredForBacktest,
+    requestedPeriod: params.period,
+    coverageNote,
+    limitations: params.dataset?.limitations,
   };
 }
 

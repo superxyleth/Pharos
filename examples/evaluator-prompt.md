@@ -23,7 +23,7 @@ Evaluation goals:
 7. Run quant_loop_run for a PHRS grid/DCA research strategy.
 8. Run the modular chain: strategy_generate -> strategy_validate -> strategy_backtest_matrix -> strategy_advise -> strategy_simulate -> strategy_export_artifact.
 9. Pass the compact matrix result directly into strategy_advise and strategy_export_artifact without manually reshaping it.
-10. Check that strategy_export_artifact supports includeCode=false and returns artifactId/codeHash.
+10. Check that strategy_export_artifact supports includeCode=false and returns result.artifact.artifactId/result.artifact.codeHash.
 11. Confirm that the Skill does not execute live trades, does not broadcast transactions, and does not perform on-chain writes.
 12. Check whether the README clearly explains Phase 1 scope, safety boundaries, Pharos Atlantic Testnet configuration, and Phase 2 reuse.
 13. Score it from 1 to 10 for Phase 1 readiness.

@@ -102,6 +102,8 @@ Requests that omit `Accept: application/json, text/event-stream` may receive `40
 | --- | --- | --- |
 | Check Pharos Atlantic RPC readiness | `pharos_network_status` | `references/pharos-network.md` |
 | Derive local wallet address and read PHRS balance | `pharos_wallet_info` | `references/pharos-network.md` |
+| List built-in strategy presets | `strategy_preset_list` | `references/mcp-tools.md` |
+| Fetch a built-in strategy preset | `strategy_preset_get` | `references/mcp-tools.md` |
 | Generate sandboxed strategy code | `strategy_generate` | `references/mcp-tools.md` |
 | Validate strategy code safety and interface contract | `strategy_validate` | `references/input-output-contracts.md` |
 | Run one-period backtest | `strategy_backtest` | `references/mcp-tools.md` |
@@ -123,7 +125,7 @@ Requests that omit `Accept: application/json, text/event-stream` may receive `40
 4. Connect to the MCP endpoint and call `tools/list`.
 5. Call `pharos_network_status`.
 6. Run `quant_loop_run` for an end-to-end Phase 1 evaluation.
-7. For modular evaluation, run `strategy_generate`, `strategy_validate`, `strategy_backtest_matrix`, `strategy_advise`, `strategy_simulate`, and `strategy_export_artifact`.
+7. For modular evaluation, run `strategy_preset_list`, `strategy_preset_get`, `strategy_validate`, `strategy_backtest_matrix`, `strategy_advise`, `strategy_simulate`, and `strategy_export_artifact`.
 8. Report whether the Skill is reusable, composable, safe, and suitable for Pharos Phase 1.
 
 ## Progressive Disclosure Guide

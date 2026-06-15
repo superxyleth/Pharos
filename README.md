@@ -4,6 +4,23 @@
 
 Pharos Quant Strategy Lifecycle Skill is a Phase 1 MCP Skill that lets AI Agents generate, validate, backtest, simulate, and export reusable PHRS strategy artifacts on Pharos Atlantic Testnet, with no live trading or transaction broadcasting.
 
+## 60-Second Judge Summary
+
+This is Agent Skill infrastructure for Pharos Phase 1, not an alpha-seeking trading bot.
+
+AI Agents can use this reusable MCP Skill to convert natural-language PHRS strategy ideas into sandbox-validated JavaScript strategy code, run deterministic multi-period backtests, produce risk-aware advice, simulate decisions without execution, and export reusable Phase 2 strategy artifacts with safety flags and code hashes.
+
+The core review path is free and safe by design:
+
+- no live trading
+- no transaction signing
+- no transaction broadcasting
+- no swaps, approvals, transfers, or deployments
+- no on-chain writes
+- no private key exposure
+
+Optional x402 routes and MCP tools are included as monetization scaffolding for future paid artifacts and reports. They do not change the free core MCP path, and settlement/broadcast behavior remains disabled.
+
 ## Judge Quick Test
 
 Public repository:
@@ -83,11 +100,11 @@ One-call deterministic review path:
 
 Expected checks:
 
-- `tools/list` exposes the 10 core research tools and optional x402 payment-prep tools.
+- `tools/list` exposes the core research tools, preset tools, and optional x402 payment-prep tools.
 - `pharos_network_status.chainId = 688689`.
 - `quant_loop_run` returns 7 backtest periods.
 - `executionModeSummary.providerTimeoutMs = 90000`.
-- `artifact.artifactId` and `artifact.codeHash` are present.
+- Tool result payload includes `result.artifact.artifactId` and `result.artifact.codeHash`.
 - `safetySummary.phase1Safe = true`.
 - `dataSourceSummary.type = deterministic-sample` for the deterministic judging path.
 - `liveTrading.enabled = false`.
@@ -105,12 +122,16 @@ Node.js 20+
 Install and validate the Skill package:
 
 ```bash
-npm install
+npm install --include=dev
 npm run validate:skill
+npm run typecheck
 npm test
+npm run judge:smoke
 ```
 
-Run the official-review-style public smoke test:
+`npm run typecheck` requires dev dependencies such as `@types/node`; production-only installs are not sufficient for local source validation.
+
+Run the official-review-style public smoke test separately if desired:
 
 ```bash
 npm run judge:smoke
@@ -131,9 +152,11 @@ npm run test:mcp
 Reproducibility notes:
 
 - Public review does not require a local `.env`; reviewers can use the public MCP endpoint above.
+- Use `npm install --include=dev` for source validation and typechecking.
 - `OPENAI_API_KEY` is optional. The recommended judging path uses `useOpenAI=false` for deterministic reproducibility.
 - `PRIVATE_KEY` is not required for public evaluation. Wallet output is read-only and does not return private keys.
 - `npm run test:openai` is optional and only checks the AI provider path.
+- `npm audit --registry=https://registry.npmjs.org/` is expected to report 0 vulnerabilities. See `docs/DEPENDENCY_AUDIT.md`.
 
 ## Artifact Reuse For Future Agents
 
@@ -156,12 +179,13 @@ See `docs/PHASE2_ARTIFACT_REUSE.md`, `examples/consume-artifact-example.json`, a
 
 The Skill includes optional x402-style paid gateway scaffolding for future monetized resources.
 
-This layer is disabled by default and does not affect the core Phase 1 MCP review path.
+This layer does not affect the core Phase 1 MCP review path. The public service exposes x402 quote and verification scaffolding for review, while settlement and broadcast behavior remain disabled.
 
 ```text
-X402_ENABLED=false
 X402_NETWORK=eip155:688689
 X402_DEFAULT_ASSET=PHRS
+settlementBroadcastEnabled=false
+onChainWritesEnabled=false
 ```
 
 Public x402 endpoints:
@@ -199,6 +223,7 @@ Safety:
 - protected routes return `PAYMENT-REQUIRED` headers and accept `PAYMENT-SIGNATURE` for facilitator verification.
 - public paid routes also verify confirmed Pharos Atlantic native PHRS transaction hashes for the quoted `payTo`, amount, and resource binding.
 - native PHRS receipt verification binds a transaction hash to one quote/resource/method/payTo/amount tuple to prevent cross-resource replay.
+- core MCP tools remain free and reviewable.
 - x402 does not broadcast payments in this Phase 1 Skill.
 - x402 does not call facilitator `/settle`.
 - x402 does not sign transactions.
@@ -312,6 +337,8 @@ Demo 与架构文档：
 
 - `pharos_network_status`：检查 Pharos Atlantic RPC、链 ID `688689`、当前区块高度。
 - `pharos_wallet_info`：从本地 `.env` 的 `PRIVATE_KEY` 派生钱包地址，并查询 PHRS 余额；不会返回私钥。
+- `strategy_preset_list`：列出内置策略 preset，例如 `pros-dca-guarded`。
+- `strategy_preset_get`：按 preset id 返回可执行策略代码，便于评委做确定性测试。
 - `strategy_generate`：根据自然语言策略需求生成沙箱可执行策略代码。
 - `strategy_validate`：校验策略代码是否符合 `exports.evaluate(ctx)` 规范，并拦截危险 API。
 - `strategy_backtest`：执行单周期回测，返回收益率、胜率、最大回撤、Sharpe、交易次数等指标。
@@ -320,6 +347,12 @@ Demo 与架构文档：
 - `strategy_simulate`：基于样例行情或外部传入行情进行模拟决策，不广播交易。
 - `strategy_export_artifact`：导出策略代码、参数、回测摘要、风险说明和使用规范。
 - `quant_loop_run`：一键执行 Phase 1 闭环：生成、校验、回测、建议、模拟、导出。
+
+## 市场数据
+
+- 当前主市场数据源为 OKX `PROS/USDT` 1H K 线：`assets/market-data/okx/PROS_USDT_1H.okx.jsonl`。
+- `assets/market-data/manifest.json` 中的 `primaryMarketDatasetId` 指向 `okx:PROS_USDT:1H`。
+- 如果请求 `6M`、`1Y`、`2Y` 或 `3Y`，但 OKX 当前只返回较短历史，回测会使用可得真实 K 线并设置 `coverageComplete=false`，不会用模拟数据补齐。
 
 ## 环境变量
 
@@ -354,7 +387,7 @@ PORT=3001
 ## 安装与启动
 
 ```bash
-npm install
+npm install --include=dev
 npm run typecheck
 npm run mcp
 ```

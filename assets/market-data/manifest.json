@@ -1,0 +1,174 @@
+{
+  "version": 1,
+  "generatedAt": "2026-06-15T17:45:31.259852Z",
+  "source": "real-on-chain-pool-state",
+  "datasets": [
+    {
+      "datasetId": "okx:PROS_USDT:1H",
+      "source": "okx-market-history-candles",
+      "exchange": "OKX",
+      "market": "spot",
+      "instId": "PROS-USDT",
+      "pair": "PROS/USDT",
+      "baseAsset": {
+        "symbol": "PROS"
+      },
+      "quoteAsset": {
+        "symbol": "USDT"
+      },
+      "interval": "1H",
+      "format": "jsonl",
+      "path": "assets/market-data/okx/PROS_USDT_1H.okx.jsonl",
+      "candleCount": 796,
+      "startTime": 1778666400000,
+      "endTime": 1781528400000,
+      "generatedAt": "2026-06-15T13:42:33.719Z",
+      "requestedYears": 3,
+      "marketEvidence": true,
+      "realMarketPrice": true,
+      "cexComparable": true,
+      "mainnetProsComparable": true,
+      "tradeDerived": true,
+      "volumeAvailable": true,
+      "preferredForBacktest": true,
+      "dataSource": "OKX public REST API /api/v5/market/history-candles",
+      "limitations": [
+        "Coverage is limited to the history returned by OKX for PROS-USDT.",
+        "The newest in-progress candle may have confirm=false."
+      ]
+    },
+    {
+      "datasetId": "atlantic-testnet:WPHRS_USDT:1H:faroswap-v3-slot0",
+      "network": "atlantic-testnet",
+      "chainId": 688689,
+      "pair": "WPHRS/USDT",
+      "interval": "1H",
+      "format": "jsonl",
+      "path": "assets/market-data/atlantic-testnet/WPHRS_USDT_1H.slot0.real.jsonl",
+      "poolAddress": "0xAB19d9EE718C6ED0C1E1809c664456Ee788D454c",
+      "dex": "FaroSwap",
+      "poolType": "UniswapV3-compatible",
+      "token0": "0x838800b758277CC111B2d48Ab01e5E164f8E9471",
+      "token1": "0xE7E84B8B4f39C507499c40B4ac199B050e2882d5",
+      "baseAsset": {
+        "symbol": "WPHRS",
+        "address": "0x838800b758277CC111B2d48Ab01e5E164f8E9471",
+        "decimals": 18
+      },
+      "quoteAsset": {
+        "symbol": "USDT",
+        "address": "0xE7E84B8B4f39C507499c40B4ac199B050e2882d5",
+        "decimals": 6
+      },
+      "firstCodeBlock": 2176038,
+      "firstCodeTime": "2025-10-30T19:12:57.000Z",
+      "latestObservedBlock": 24253220,
+      "latestObservedBlockTime": "2026-06-15T13:32:38.000Z",
+      "candleCount": 720,
+      "startTime": 1778940000000,
+      "endTime": 1781528400000,
+      "maxHoursRequested": 720,
+      "marketEvidence": false,
+      "realMarketPrice": false,
+      "onChainPoolStateEvidence": true,
+      "cexComparable": false,
+      "mainnetProsComparable": false,
+      "tradeDerived": false,
+      "volumeAvailable": false,
+      "dataSource": "Pharos Atlantic RPC historical eth_call(slot0) on FaroSwap WPHRS/USDT V3 pool",
+      "limitations": [
+        "This is Atlantic testnet WPHRS, not OKX PROS and not Pharos mainnet WPROS.",
+        "The observed testnet pool state is near 1 USDT and should not be used as PROS/USD market evidence.",
+        "These candles are real on-chain pool-state price snapshots, not Swap-event OHLCV.",
+        "OHLC is equal within each hour because this dataset samples one slot0 state per hour.",
+        "sampleBlockTime is null to keep the RPC call count low; sampleBlock is recorded for reproducibility.",
+        "Volume is 0 because explorer/indexer APIs are rate-limited and full Swap-event extraction is not yet complete."
+      ]
+    },
+    {
+      "datasetId": "binance:BTCUSDT:1H:last3y:wbtc-proxy",
+      "source": "binance-spot-market-history-candles",
+      "exchange": "Binance",
+      "market": "spot",
+      "symbol": "BTCUSDT",
+      "pair": "BTC/USDT",
+      "proxyForWrappedAsset": true,
+      "wrappedAsset": {
+        "symbol": "WBTC"
+      },
+      "underlyingAsset": {
+        "symbol": "BTC"
+      },
+      "quoteAsset": {
+        "symbol": "USDT"
+      },
+      "interval": "1H",
+      "format": "csv",
+      "path": "assets/market-data/binance/spot/1h/BTCUSDT_1H.binance_spot.last3y.csv",
+      "candleCount": 26304,
+      "startTime": 1686700800000,
+      "endTime": 1781391600000,
+      "startTimeIso": "2023-06-14T00:00:00Z",
+      "endTimeIso": "2026-06-13T23:00:00Z",
+      "generatedAt": "2026-06-15T17:45:31.259852Z",
+      "requestedYears": 3,
+      "marketEvidence": true,
+      "realMarketPrice": true,
+      "cexComparable": true,
+      "tradeDerived": true,
+      "volumeAvailable": true,
+      "notOnChainEvidence": true,
+      "notExecutionEvidence": true,
+      "dataSource": "Friend server Binance spot 1h OHLCV CSV snapshot",
+      "sourceServerPath": "/home/friend/chainalpha-quant/.data/market-history/binance/spot/1h/BTCUSDT.csv",
+      "limitations": [
+        "BTCUSDT spot candles are used as the underlying price proxy for WBTC research backtests.",
+        "This is not Pharos on-chain DEX pool data, liquidity evidence, or swap execution evidence.",
+        "Use separate Pharos DEX/oracle/indexer data before making any on-chain execution claim."
+      ]
+    },
+    {
+      "datasetId": "binance:ETHUSDT:1H:last3y:weth-proxy",
+      "source": "binance-spot-market-history-candles",
+      "exchange": "Binance",
+      "market": "spot",
+      "symbol": "ETHUSDT",
+      "pair": "ETH/USDT",
+      "proxyForWrappedAsset": true,
+      "wrappedAsset": {
+        "symbol": "WETH"
+      },
+      "underlyingAsset": {
+        "symbol": "ETH"
+      },
+      "quoteAsset": {
+        "symbol": "USDT"
+      },
+      "interval": "1H",
+      "format": "csv",
+      "path": "assets/market-data/binance/spot/1h/ETHUSDT_1H.binance_spot.last3y.csv",
+      "candleCount": 26304,
+      "startTime": 1686700800000,
+      "endTime": 1781391600000,
+      "startTimeIso": "2023-06-14T00:00:00Z",
+      "endTimeIso": "2026-06-13T23:00:00Z",
+      "generatedAt": "2026-06-15T17:45:31.259852Z",
+      "requestedYears": 3,
+      "marketEvidence": true,
+      "realMarketPrice": true,
+      "cexComparable": true,
+      "tradeDerived": true,
+      "volumeAvailable": true,
+      "notOnChainEvidence": true,
+      "notExecutionEvidence": true,
+      "dataSource": "Friend server Binance spot 1h OHLCV CSV snapshot",
+      "sourceServerPath": "/home/friend/chainalpha-quant/.data/market-history/binance/spot/1h/ETHUSDT.csv",
+      "limitations": [
+        "ETHUSDT spot candles are used as the underlying price proxy for WETH research backtests.",
+        "This is not Pharos on-chain DEX pool data, liquidity evidence, or swap execution evidence.",
+        "Use separate Pharos DEX/oracle/indexer data before making any on-chain execution claim."
+      ]
+    }
+  ],
+  "primaryMarketDatasetId": "okx:PROS_USDT:1H"
+}

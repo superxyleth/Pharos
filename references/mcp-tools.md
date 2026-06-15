@@ -39,6 +39,14 @@ exports.evaluate = function(ctx) {
 };
 ```
 
+## `strategy_preset_list`
+
+Lists built-in strategy presets. The current preset set includes `pros-dca-guarded`, a guarded DCA strategy intended to run against the local OKX `PROS/USDT` market dataset.
+
+## `strategy_preset_get`
+
+Returns a preset by id, including executable `exports.evaluate(ctx)` code. Use this when an evaluator wants a deterministic strategy without relying on AI generation.
+
 ## `strategy_validate`
 
 Validates strategy code against the sandbox contract and blocked API list.
@@ -60,9 +68,9 @@ Runs one sandbox backtest period.
 
 Compact output includes return, win rate, drawdown, Sharpe, trade count, realized/unrealized PnL, open position value, exposure percentage, and win-rate basis.
 
-Backtest outputs also include `timeframe`, `coverage`, and `candleSource` so Agents can tell whether a result used synthetic full-period candles or externally supplied full-period candles.
+Backtest outputs also include `timeframe`, `coverage`, and `candleSource` so Agents can tell whether a result used deterministic sample candles, externally supplied candles, or a local market dataset.
 
-They also include `startTime`, `endTime`, `dataQuality`, `riskScore`, `stabilityScore`, `capitalEfficiencyScore`, and `strategyQuality`. These fields make long-running or negative-return backtests easier to interpret as diagnostics rather than failures.
+They also include `startTime`, `endTime`, `dataQuality`, `riskScore`, `stabilityScore`, `capitalEfficiencyScore`, and `strategyQuality`. When local OKX `PROS/USDT` candles are used, `dataQuality.datasetId`, `exchange`, `pair`, `coverageComplete`, and `coverageNote` explain the exact data source and whether the requested period is fully covered.
 
 Trade activity diagnostics include:
 
@@ -123,8 +131,8 @@ It supports:
 
 - full code artifact
 - lightweight artifact with `includeCode=false`
-- `artifactId`
-- `codeHash`
+- `result.artifact.artifactId`
+- `result.artifact.codeHash`
 - fixed research-only safety flags
 - backtest summary
 - validation result

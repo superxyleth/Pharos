@@ -72,10 +72,17 @@ Important: the official EVM `exact` SDK path settles ERC20 assets through EIP-30
 
 ## Default Safety
 
-Default environment:
+Local default environment:
 
 ```text
 X402_ENABLED=false
+```
+
+Public review posture:
+
+```text
+settlementBroadcastEnabled=false
+onChainWritesEnabled=false
 ```
 
 Required safety posture:
