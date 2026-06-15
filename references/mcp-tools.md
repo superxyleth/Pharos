@@ -137,3 +137,39 @@ Runs the full Phase 1 loop in one call:
 generate -> validate -> backtest matrix -> advise -> simulate -> export artifact
 
 This is the recommended demo and evaluator entry point.
+
+## Optional x402 Tools
+
+The following tools expose optional x402-style paid gateway scaffolding. They do not settle payments, sign transactions, broadcast payments, or execute trades.
+
+### `x402_payment_status`
+
+Returns whether the optional x402 gateway is enabled, which network it targets, whether receiver and facilitator configuration is present, and whether settlement broadcasting or on-chain writes are enabled.
+
+Expected safe defaults:
+
+- `enabled = false`
+- `settlementBroadcastEnabled = false`
+- `onChainWritesEnabled = false`
+
+### `x402_product_catalog`
+
+Lists optional paid resources that could be protected by x402 later, such as full artifact download, extended quant research report, or Phase 2 dry-run plan.
+
+### `x402_quote`
+
+Creates x402-style payment requirements for an optional paid resource.
+
+Inputs:
+
+- `productId`
+- optional `resource`
+- optional `method`
+
+The response is a quote only. It does not transfer funds or settle payment.
+
+### `x402_receipt_verify`
+
+Checks a receipt scaffold and returns whether it is accepted by the current configuration.
+
+By default it returns verification scaffolding only. Production payment settlement should be delegated to an official x402 facilitator or a separate payment Skill.

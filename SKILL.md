@@ -20,6 +20,9 @@ requires:
     - PHAROS_CHAIN_ID
     - PRIVATE_KEY
     - PORT
+    - X402_ENABLED
+    - X402_RECEIVER_ADDRESS
+    - X402_FACILITATOR_URL
 ---
 
 # Pharos Quant Strategy Lifecycle Skill
@@ -46,6 +49,7 @@ Use this Skill when an Agent needs to:
 - Simulate strategy decisions without execution.
 - Export a reusable research artifact for later Agent workflows.
 - Check Pharos Atlantic Testnet readiness through read-only RPC calls.
+- Inspect optional x402 payment requirements for future paid resources without settlement.
 
 Trigger terms include `Pharos`, `PHRS`, `atlantic-testnet`, `quant strategy`, `backtest`, `strategy artifact`, `MCP Skill`, and `Phase 1 Skill`.
 
@@ -106,6 +110,10 @@ Requests that omit `Accept: application/json, text/event-stream` may receive `40
 | Simulate strategy decisions without execution | `strategy_simulate` | `references/safety-and-phase1-boundary.md` |
 | Export reusable strategy artifact | `strategy_export_artifact` | `references/input-output-contracts.md` |
 | Run the full closed loop in one call | `quant_loop_run` | `references/evaluation-guide.md` |
+| Inspect optional x402 gateway status | `x402_payment_status` | `references/x402-payments.md` |
+| List optional paid x402 resources | `x402_product_catalog` | `references/x402-payments.md` |
+| Create x402-style payment requirements | `x402_quote` | `references/x402-payments.md` |
+| Verify x402 receipt scaffold without settlement | `x402_receipt_verify` | `references/x402-payments.md` |
 
 ## Recommended Agent Workflow
 
@@ -127,6 +135,7 @@ Requests that omit `Accept: application/json, text/event-stream` may receive `40
 | Run the standard Agent workflow | `references/agent-workflows.md` |
 | Verify schemas and artifact contracts | `references/input-output-contracts.md` |
 | Confirm Pharos network parameters | `references/pharos-network.md` |
+| Inspect optional x402 paid gateway scaffolding | `references/x402-payments.md` |
 | Check Phase 1 safety boundaries | `references/safety-and-phase1-boundary.md` |
 | Evaluate the submission like a reviewer | `references/evaluation-guide.md` |
 | Understand future execution separation | `references/future-phase2-execution.md` |
@@ -159,6 +168,7 @@ This Skill is safe-by-design for Phase 1:
 - No private key output.
 - Strategy code runs in a restricted sandbox.
 - Generated artifacts are research artifacts, not execution authorization.
+- Optional x402 tools only create payment requirements or verify receipt scaffolds; they do not settle payments.
 
 ## References
 
@@ -167,6 +177,7 @@ This Skill is safe-by-design for Phase 1:
 - `references/agent-workflows.md`
 - `references/input-output-contracts.md`
 - `references/pharos-network.md`
+- `references/x402-payments.md`
 - `references/safety-and-phase1-boundary.md`
 - `references/evaluation-guide.md`
 - `references/future-phase2-execution.md`
@@ -177,3 +188,4 @@ This Skill is safe-by-design for Phase 1:
 - `assets/tokens.json`
 - `assets/mcp-endpoints.json`
 - `assets/artifact.schema.json`
+- `assets/x402-products.json`

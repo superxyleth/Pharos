@@ -7,6 +7,8 @@ import { appConfig } from './config.js';
 import { registerLoopTools } from './tools/loopTools.js';
 import { registerPharosTools } from './tools/pharosTools.js';
 import { registerStrategyTools } from './tools/strategyTools.js';
+import { registerX402Tools } from './tools/x402Tools.js';
+import { registerX402Routes } from './x402/routes.js';
 
 export function createServer(): McpServer {
   const server = new McpServer({
@@ -16,6 +18,7 @@ export function createServer(): McpServer {
   registerPharosTools(server);
   registerStrategyTools(server);
   registerLoopTools(server);
+  registerX402Tools(server);
   return server;
 }
 
@@ -29,6 +32,12 @@ app.get('/health', (_req, res) => {
     phase: 'phase1-skill',
     network: 'pharos-atlantic-testnet',
     mcpEndpoint: '/mcp',
+    x402: {
+      enabled: appConfig.x402.enabled,
+      statusEndpoint: '/x402/status',
+      productsEndpoint: '/x402/products',
+      note: 'Optional x402 paid gateway scaffolding is disabled by default and does not broadcast transactions.',
+    },
   });
 });
 
@@ -38,7 +47,7 @@ app.get('/', (_req, res) => {
     service: 'pharos-quant-strategy-lifecycle-skill',
     description: 'Natural-language strategy generation, sandbox validation, backtesting, simulation, artifact export, and Pharos RPC/wallet readiness checks.',
     mcpEndpoint: '/mcp',
-    tools: [
+    coreTools: [
       'pharos_network_status',
       'pharos_wallet_info',
       'strategy_generate',
@@ -50,8 +59,24 @@ app.get('/', (_req, res) => {
       'strategy_export_artifact',
       'quant_loop_run',
     ],
+    optionalX402Tools: [
+      'x402_payment_status',
+      'x402_product_catalog',
+      'x402_quote',
+      'x402_receipt_verify',
+    ],
+    x402: {
+      enabled: appConfig.x402.enabled,
+      statusEndpoint: '/x402/status',
+      productsEndpoint: '/x402/products',
+      quoteEndpoint: '/x402/quote',
+      verifyEndpoint: '/x402/verify',
+      paidRoutes: ['/paid/artifacts/:artifactId', '/paid/quant-report', '/paid/dry-run-plan'],
+    },
   });
 });
+
+registerX402Routes(app);
 
 app.post('/mcp', async (req, res) => {
   const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });

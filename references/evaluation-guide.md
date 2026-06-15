@@ -35,6 +35,15 @@ Call:
 
 Requests that omit the `Accept` header may receive `406 Not Acceptable`.
 
+Expected discovery:
+
+- 10 core research tools.
+- Optional x402 payment-prep tools may also be present:
+  - `x402_payment_status`
+  - `x402_product_catalog`
+  - `x402_quote`
+  - `x402_receipt_verify`
+
 ## Step 3: Verify Network Status
 
 Call `pharos_network_status`.
@@ -79,6 +88,14 @@ Run:
 Pass the compact matrix object directly into `strategy_advise.results` and `strategy_export_artifact.backtests`.
 
 ## Step 6: Score
+
+Optional x402 check:
+
+Call `x402_payment_status` and confirm:
+
+- `settlementBroadcastEnabled = false`
+- `onChainWritesEnabled = false`
+- x402 is optional and does not affect the core Phase 1 review path.
 
 Suggested review criteria:
 

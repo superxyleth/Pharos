@@ -18,6 +18,13 @@ const requiredTools = [
   'quant_loop_run',
 ];
 
+const x402Tools = [
+  'x402_payment_status',
+  'x402_product_catalog',
+  'x402_quote',
+  'x402_receipt_verify',
+];
+
 const checks = [];
 
 function addCheck(name, ok, detail = '') {
@@ -113,9 +120,12 @@ try {
   const list = await postMcp({ jsonrpc: '2.0', id: 1, method: 'tools/list' });
   tools = list.result?.tools ?? [];
   const names = tools.map((tool) => tool.name);
-  addCheck('tools/list returns 10 tools', tools.length === 10, `count=${tools.length}`);
+  addCheck('tools/list returns at least 10 core tools', tools.length >= requiredTools.length, `count=${tools.length}`);
   for (const tool of requiredTools) {
     addCheck(`tools/list exposes ${tool}`, names.includes(tool));
+  }
+  for (const tool of x402Tools) {
+    addCheck(`tools/list exposes optional ${tool}`, names.includes(tool));
   }
 } catch (error) {
   addCheck('tools/list returns tools', false, error.message);
@@ -140,9 +150,19 @@ try {
   addCheck('pharos_wallet_info returns privacy-safe output', false, error.message);
 }
 
+let x402;
+try {
+  x402 = await callTool(5, 'x402_payment_status');
+  addCheck('x402 status tool succeeds', x402.success === true, `success=${x402.success}`);
+  addCheck('x402 settlement broadcast disabled', x402.settlementBroadcastEnabled === false, `settlement=${x402.settlementBroadcastEnabled}`);
+  addCheck('x402 on-chain writes disabled', x402.onChainWritesEnabled === false, `onChainWrites=${x402.onChainWritesEnabled}`);
+} catch (error) {
+  addCheck('x402_payment_status returns safe payment status', false, error.message);
+}
+
 let loop;
 try {
-  loop = await callTool(4, 'quant_loop_run', {
+  loop = await callTool(6, 'quant_loop_run', {
     description:
       'Generate a PHRS grid and DCA research strategy with trend filter, volatility filter, risk-off exit, and max exposure control. Run full multi-period backtests, produce risk-aware advice, simulate decisions, and export a reusable artifact.',
     symbol: 'PHRS',
@@ -206,6 +226,14 @@ console.log(JSON.stringify(
           walletConfigured: wallet.walletConfigured,
           readOnly: wallet.readOnly,
           privateKeyReturned: wallet.privateKeyReturned,
+        }
+      : null,
+    x402: x402
+      ? {
+          enabled: x402.enabled,
+          mode: x402.mode,
+          settlementBroadcastEnabled: x402.settlementBroadcastEnabled,
+          onChainWritesEnabled: x402.onChainWritesEnabled,
         }
       : null,
     loop: loop

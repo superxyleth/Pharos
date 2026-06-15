@@ -22,12 +22,14 @@ The Skill package is organized for Agent-readable progressive disclosure:
 - `references/`: task-specific reference files for overview, MCP tools, workflows, contracts, network, safety, and evaluation.
 - `assets/`: machine-readable network, token, and endpoint metadata.
 - `assets/artifact.schema.json`: machine-readable schema for exported strategy artifacts.
+- `assets/x402-products.json`: optional x402 paid resource catalog.
 - `src/`: MCP runtime and strategy lifecycle implementation.
 - `scripts/validate-skill.mjs`: submission self-check for local package structure and public MCP readiness.
 - `scripts/judge-smoke.mjs`: official-review-style smoke test against the public MCP endpoint.
 - `examples/demo-json-rpc-flow.md`: copy-ready JSON-RPC demo requests.
 - `examples/consume-artifact-example.json`: example Phase 2 artifact consumption plan.
 - `examples/phase2-agent-consume-artifact-flow.md`: step-by-step future Agent artifact consumption flow.
+- `examples/x402-paid-artifact-flow.md`: optional x402 paid artifact quote and receipt scaffold flow.
 - `docs/DEMO_FLOW.md`: short reviewer demo flow.
 - `docs/DEMO_TRANSCRIPT.md`: latest public endpoint test transcript.
 - `docs/PHASE2_ARTIFACT_REUSE.md`: Phase 2 artifact reuse and safety boundary guide.
@@ -60,7 +62,7 @@ http://150.158.28.155:3011/health
 
 ## MCP Tools
 
-The public MCP runtime exposes 10 tools:
+The public MCP runtime exposes 10 core research tools:
 
 - `pharos_network_status`
 - `pharos_wallet_info`
@@ -72,6 +74,15 @@ The public MCP runtime exposes 10 tools:
 - `strategy_simulate`
 - `strategy_export_artifact`
 - `quant_loop_run`
+
+It also exposes 4 optional x402 payment-prep tools:
+
+- `x402_payment_status`
+- `x402_product_catalog`
+- `x402_quote`
+- `x402_receipt_verify`
+
+The x402 tools are disabled-by-default scaffolding for future paid resources. They do not settle payments, sign transactions, broadcast payments, or execute trades.
 
 ## Core Capability
 
@@ -154,7 +165,7 @@ Latest observed results:
 - `validate:skill`: 97 checks passed.
 - `npm test`: typecheck, backtest smoke, and Pharos read-only smoke passed.
 - Public health endpoint responded successfully.
-- Public `tools/list` exposed all 10 expected tools.
+- Public `tools/list` exposed all 10 core tools and optional x402 payment-prep tools.
 - Public `pharos_network_status` returned `atlantic-testnet` and chain ID `688689`.
 - Public deterministic `quant_loop_run` completed successfully and exported an artifact.
 
@@ -169,3 +180,23 @@ This Skill acts as the research and risk-validation layer for future Pharos Agen
 The exported artifact is not a trading authorization. A future Agent should first validate it against `assets/artifact.schema.json`, check all safety flags, review risk and drawdown diagnostics, query wallet/oracle context through separate read-only tools, and only then produce a dry-run execution plan for a separate execution Skill. Any write-capable Phase 2 module must require explicit user confirmation before broadcasting transactions.
 
 See `docs/PHASE2_ARTIFACT_REUSE.md`, `examples/consume-artifact-example.json`, and `examples/phase2-agent-consume-artifact-flow.md`.
+
+## Optional x402 Paid Gateway
+
+This Skill includes an optional x402-style paid gateway skeleton for future monetized resources:
+
+- `GET /x402/status`
+- `GET /x402/products`
+- `POST /x402/quote`
+- `POST /x402/verify`
+- `GET /paid/artifacts/:artifactId`
+- `POST /paid/quant-report`
+- `POST /paid/dry-run-plan`
+
+Default status:
+
+```text
+X402_ENABLED=false
+```
+
+The x402 layer does not affect the free Phase 1 review path. It produces payment requirements and receipt-verification scaffolding only; production settlement should be delegated to a separate x402 payment service or future Phase 2 payment Skill.

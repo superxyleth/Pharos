@@ -81,7 +81,7 @@ One-call deterministic review path:
 
 Expected checks:
 
-- `tools/list` exposes 10 tools.
+- `tools/list` exposes the 10 core research tools and optional x402 payment-prep tools.
 - `pharos_network_status.chainId = 688689`.
 - `quant_loop_run` returns 7 backtest periods.
 - `executionModeSummary.providerTimeoutMs = 90000`.
@@ -147,6 +147,44 @@ Future Phase 2 Agents should:
 8. Use any wallet, oracle, DEX, or execution Skill as a separate disabled-by-default module with its own dry-run, limits, and explicit confirmation.
 
 See `docs/PHASE2_ARTIFACT_REUSE.md`, `examples/consume-artifact-example.json`, and `examples/phase2-agent-consume-artifact-flow.md`.
+
+## Optional x402 Paid Gateway
+
+The Skill includes optional x402-style paid gateway scaffolding for future monetized resources.
+
+This layer is disabled by default and does not affect the core Phase 1 MCP review path.
+
+```text
+X402_ENABLED=false
+```
+
+Public x402 endpoints:
+
+```text
+GET  /x402/status
+GET  /x402/products
+POST /x402/quote
+POST /x402/verify
+GET  /paid/artifacts/:artifactId
+POST /paid/quant-report
+POST /paid/dry-run-plan
+```
+
+Optional MCP tools:
+
+- `x402_payment_status`
+- `x402_product_catalog`
+- `x402_quote`
+- `x402_receipt_verify`
+
+Safety:
+
+- x402 does not broadcast payments in this Phase 1 Skill.
+- x402 does not sign transactions.
+- x402 does not execute trades.
+- paid routes return HTTP `402 Payment Required` requirements unless a separate payment service verifies settlement.
+
+See `references/x402-payments.md`, `assets/x402-products.json`, and `examples/x402-paid-artifact-flow.md`.
 
 面向 Pharos Skill-to-Agent Dual Cascade Hackathon Phase 1 的 Pharos-compatible Skill package + MCP service runtime。
 

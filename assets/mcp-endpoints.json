@@ -9,10 +9,21 @@
     "mcp": "http://localhost:3001/mcp",
     "health": "http://localhost:3001/health"
   },
+  "x402": {
+    "enabledByDefault": false,
+    "status": "/x402/status",
+    "products": "/x402/products",
+    "quote": "/x402/quote",
+    "verify": "/x402/verify",
+    "paidRoutes": [
+      "/paid/artifacts/:artifactId",
+      "/paid/quant-report",
+      "/paid/dry-run-plan"
+    ]
+  },
   "safety": {
     "liveTradingEnabled": false,
     "transactionBroadcastEnabled": false,
     "onChainWritesEnabled": false
   }
 }
-

@@ -17,14 +17,17 @@ const requiredFiles = [
   'assets/networks.json',
   'assets/tokens.json',
   'assets/mcp-endpoints.json',
+  'assets/x402-products.json',
   'assets/artifact.schema.json',
   'docs/PHASE2_ARTIFACT_REUSE.md',
   'examples/consume-artifact-example.json',
   'examples/phase2-agent-consume-artifact-flow.md',
+  'references/x402-payments.md',
+  'examples/x402-paid-artifact-flow.md',
   'scripts/judge-smoke.mjs',
 ];
 
-const requiredTools = [
+const coreTools = [
   'pharos_network_status',
   'pharos_wallet_info',
   'strategy_generate',
@@ -36,6 +39,15 @@ const requiredTools = [
   'strategy_export_artifact',
   'quant_loop_run',
 ];
+
+const x402Tools = [
+  'x402_payment_status',
+  'x402_product_catalog',
+  'x402_quote',
+  'x402_receipt_verify',
+];
+
+const requiredTools = [...coreTools, ...x402Tools];
 
 const checks = [];
 
@@ -125,6 +137,7 @@ assertCheck(readme.includes('## Judge Quick Test'), 'README has Judge Quick Test
 assertCheck(readme.includes('## Local Reproduction'), 'README has Local Reproduction', 'local reproduction notes missing');
 assertCheck(readme.includes('npm run judge:smoke'), 'README documents judge smoke test', 'judge smoke command missing');
 assertCheck(readme.includes('## Artifact Reuse For Future Agents'), 'README has artifact reuse section', 'artifact reuse section missing');
+assertCheck(readme.includes('## Optional x402 Paid Gateway'), 'README has optional x402 section', 'x402 section missing');
 assertCheck(readme.includes('Accept: application/json, text/event-stream'), 'README documents MCP Accept header', 'MCP Accept header missing');
 assertCheck(readme.includes('"useOpenAI": false'), 'README quick test uses deterministic path', 'useOpenAI=false missing from quick test');
 
@@ -137,6 +150,14 @@ assertCheck(phase2Reuse.includes('assets/artifact.schema.json'), 'Phase 2 reuse 
 assertCheck(phase2Reuse.includes('disabled by default'), 'Phase 2 reuse doc keeps execution disabled by default', 'execution guardrail missing');
 assertCheck(phase2Reuse.includes('examples/phase2-agent-consume-artifact-flow.md'), 'Phase 2 reuse doc links detailed flow', 'detailed flow link missing');
 
+const x402Payments = await readText('references/x402-payments.md');
+assertCheck(x402Payments.includes('X402_ENABLED=false'), 'x402 payment doc documents default disabled state', 'x402 default disabled missing');
+assertCheck(x402Payments.includes('x402_quote'), 'x402 payment doc lists quote flow', 'x402 quote missing');
+
+const x402PaidFlow = await readText('examples/x402-paid-artifact-flow.md');
+assertCheck(x402PaidFlow.includes('HTTP/1.1 402 Payment Required'), 'x402 paid flow shows 402 response', '402 response missing');
+assertCheck(x402PaidFlow.includes('x402_receipt_verify'), 'x402 paid flow includes receipt verify', 'receipt verify missing');
+
 const consumeExample = await readJson('examples/consume-artifact-example.json');
 assertCheck(consumeExample.artifactRef?.schema === 'assets/artifact.schema.json', 'consume artifact example references schema', 'schema reference missing');
 assertCheck(Array.isArray(consumeExample.requiredChecks), 'consume artifact example has required checks', 'requiredChecks missing');
@@ -148,6 +169,10 @@ assertCheck(phase2Flow.includes('explicitUserConfirmation'), 'Phase 2 flow requi
 
 const packageJson = await readJson('package.json');
 assertCheck(packageJson.scripts?.['judge:smoke'] === 'node scripts/judge-smoke.mjs', 'package.json defines judge:smoke', 'judge smoke script missing');
+
+const x402Products = await readJson('assets/x402-products.json');
+assertCheck(Array.isArray(x402Products.products), 'assets/x402-products.json has product list', 'x402 products missing');
+assertCheck(x402Products.settlementBroadcastEnabled === false, 'x402 products disable settlement broadcast', 'x402 settlement should be false');
 
 const pharosNetwork = await readText('references/pharos-network.md');
 for (const expected of [

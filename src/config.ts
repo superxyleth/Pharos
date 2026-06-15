@@ -11,6 +11,19 @@ export interface AppConfig {
   pharosChainId: number;
   privateKey?: string;
   port: number;
+  x402: X402Config;
+}
+
+export interface X402Config {
+  enabled: boolean;
+  network: string;
+  chainId: number;
+  receiverAddress?: string;
+  facilitatorUrl?: string;
+  defaultAsset: string;
+  defaultAmount: string;
+  requireConfirmation: boolean;
+  devAcceptUnsignedReceipt: boolean;
 }
 
 function readNumber(name: string, fallback: number): number {
@@ -18,6 +31,12 @@ function readNumber(name: string, fallback: number): number {
   if (!raw) return fallback;
   const parsed = Number(raw);
   return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function readBoolean(name: string, fallback: boolean): boolean {
+  const raw = process.env[name]?.trim().toLowerCase();
+  if (!raw) return fallback;
+  return ['1', 'true', 'yes', 'on'].includes(raw);
 }
 
 function normalizePrivateKey(value?: string): string | undefined {
@@ -36,6 +55,17 @@ export function getConfig(): AppConfig {
     pharosChainId: readNumber('PHAROS_CHAIN_ID', 688689),
     privateKey: normalizePrivateKey(process.env.PRIVATE_KEY),
     port: readNumber('PORT', 3001),
+    x402: {
+      enabled: readBoolean('X402_ENABLED', false),
+      network: process.env.X402_NETWORK?.trim() || 'pharos-atlantic-testnet',
+      chainId: readNumber('X402_CHAIN_ID', readNumber('PHAROS_CHAIN_ID', 688689)),
+      receiverAddress: process.env.X402_RECEIVER_ADDRESS?.trim(),
+      facilitatorUrl: process.env.X402_FACILITATOR_URL?.trim(),
+      defaultAsset: process.env.X402_DEFAULT_ASSET?.trim() || 'PHRS',
+      defaultAmount: process.env.X402_DEFAULT_AMOUNT?.trim() || '0.01',
+      requireConfirmation: readBoolean('X402_REQUIRE_CONFIRMATION', true),
+      devAcceptUnsignedReceipt: readBoolean('X402_DEV_ACCEPT_UNSIGNED_RECEIPT', false),
+    },
   };
 }
 

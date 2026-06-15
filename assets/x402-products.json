@@ -1,0 +1,44 @@
+{
+  "protocol": "x402",
+  "network": "pharos-atlantic-testnet",
+  "chainId": 688689,
+  "enabledByDefault": false,
+  "settlementBroadcastEnabled": false,
+  "onChainWritesEnabled": false,
+  "products": [
+    {
+      "id": "paid-full-artifact",
+      "name": "Paid full strategy artifact",
+      "resource": "/paid/artifacts/:artifactId",
+      "method": "GET",
+      "defaultAmount": "0.01",
+      "defaultAsset": "PHRS",
+      "phase1Safe": true
+    },
+    {
+      "id": "paid-quant-report",
+      "name": "Paid quant research report",
+      "resource": "/paid/quant-report",
+      "method": "POST",
+      "defaultAmount": "0.01",
+      "defaultAsset": "PHRS",
+      "phase1Safe": true
+    },
+    {
+      "id": "paid-dry-run-plan",
+      "name": "Paid Phase 2 dry-run plan",
+      "resource": "/paid/dry-run-plan",
+      "method": "POST",
+      "defaultAmount": "0.01",
+      "defaultAsset": "PHRS",
+      "phase1Safe": true
+    }
+  ],
+  "safety": {
+    "coreMcpReviewUnaffected": true,
+    "requiresSeparatePaymentSettlement": true,
+    "doesNotSignTransactions": true,
+    "doesNotBroadcastTransactions": true,
+    "doesNotExecuteTrades": true
+  }
+}
