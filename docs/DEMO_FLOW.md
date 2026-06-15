@@ -118,8 +118,8 @@ Suggested input:
 
 ```json
 {
-  "description": "Generate a PHRS grid and DCA research strategy, run multi-period backtests, produce risk advice, simulate decisions, and export an artifact.",
-  "symbol": "PHRS",
+  "description": "Generate a WBTC trend and DCA research strategy using BTCUSDT three-year proxy candles, run multi-period backtests, produce risk advice, simulate decisions, and export an artifact.",
+  "symbol": "WBTC",
   "chain": "pharos-atlantic-testnet",
   "initialCapital": 1000,
   "useOpenAI": false

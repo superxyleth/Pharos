@@ -55,8 +55,8 @@ Expected checks:
   "params": {
     "name": "quant_loop_run",
     "arguments": {
-      "description": "Generate a PHRS grid and DCA research strategy, run multi-period backtests, produce risk advice, simulate decisions, and export an artifact.",
-      "symbol": "PHRS",
+      "description": "Generate a WBTC trend and DCA research strategy using BTCUSDT three-year proxy candles, run multi-period backtests, produce risk advice, simulate decisions, and export an artifact.",
+      "symbol": "WBTC",
       "chain": "pharos-atlantic-testnet",
       "initialCapital": 1000,
       "useOpenAI": false
@@ -89,10 +89,10 @@ Use the generated strategy code and the matrix result from previous calls.
   "params": {
     "name": "strategy_export_artifact",
     "arguments": {
-      "name": "phrs-research-artifact",
-      "description": "Reusable Phase 1 PHRS research strategy artifact.",
+      "name": "wbtc-research-artifact",
+      "description": "Reusable Phase 1 WBTC research strategy artifact using BTCUSDT proxy candles.",
       "code": "exports.evaluate = function(ctx) { return { action: 'HOLD', reason: 'demo placeholder' }; };",
-      "symbol": "PHRS",
+      "symbol": "WBTC",
       "chain": "pharos-atlantic-testnet",
       "includeCode": false
     }

@@ -164,8 +164,8 @@ let loop;
 try {
   loop = await callTool(6, 'quant_loop_run', {
     description:
-      'Generate a PHRS grid and DCA research strategy with trend filter, volatility filter, risk-off exit, and max exposure control. Run full multi-period backtests, produce risk-aware advice, simulate decisions, and export a reusable artifact.',
-    symbol: 'PHRS',
+      'Generate a WBTC trend and DCA research strategy using the local BTCUSDT three-year proxy dataset, with volatility filter, risk-off exit, and max exposure control. Run full multi-period backtests, produce risk-aware advice, simulate decisions, and export a reusable artifact.',
+    symbol: 'WBTC',
     chain: 'pharos-atlantic-testnet',
     initialCapital: 1000,
     useOpenAI: false,
@@ -178,6 +178,8 @@ try {
   addCheck('deterministic generation mode is used', loop.executionModeSummary?.generationMode === 'deterministic', `mode=${loop.executionModeSummary?.generationMode}`);
   addCheck('provider timeout is 90000ms', loop.executionModeSummary?.providerTimeoutMs === 90000, `timeout=${loop.executionModeSummary?.providerTimeoutMs}`);
   addCheck('backtest summary has 7 periods', periods.length === 7, `periods=${periods.length}`);
+  addCheck('WBTC proxy market dataset is used', loop.dataSourceSummary?.sources?.some((source) => String(source).includes('Friend server Binance spot 1h OHLCV CSV snapshot')), `sources=${JSON.stringify(loop.dataSourceSummary?.sources)}`);
+  addCheck('WBTC proxy data is market evidence', loop.dataSourceSummary?.marketEvidence === true, `marketEvidence=${loop.dataSourceSummary?.marketEvidence}`);
   addCheck('all backtest periods have trades', periods.every((period) => Number(period.totalTrades) > 0), `trades=${periods.map((period) => `${period.period}:${period.totalTrades}`).join(',')}`);
   addCheck('artifactId is present', Boolean(loop.artifact?.artifactId), loop.artifact?.artifactId ?? '');
   addCheck('codeHash is present', /^sha256:[a-f0-9]{64}$/.test(loop.artifact?.codeHash ?? ''), loop.artifact?.codeHash ?? '');

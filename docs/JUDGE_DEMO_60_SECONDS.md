@@ -70,7 +70,7 @@ Expected markers:
 curl -X POST http://150.158.28.155:3011/mcp \
   -H "Content-Type: application/json" \
   -H "Accept: application/json, text/event-stream" \
-  -d "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"tools/call\",\"params\":{\"name\":\"quant_loop_run\",\"arguments\":{\"description\":\"Generate a PHRS grid and DCA research strategy with trend filter, volatility filter, risk-off exit, and max exposure control. Run full multi-period backtests, produce risk-aware advice, simulate decisions, and export a reusable artifact.\",\"symbol\":\"PHRS\",\"chain\":\"pharos-atlantic-testnet\",\"initialCapital\":1000,\"useOpenAI\":false}}}"
+  -d "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"tools/call\",\"params\":{\"name\":\"quant_loop_run\",\"arguments\":{\"description\":\"Generate a WBTC trend and DCA research strategy using BTCUSDT three-year proxy candles, with volatility filter, risk-off exit, and max exposure control. Run full multi-period backtests, produce risk-aware advice, simulate decisions, and export a reusable artifact.\",\"symbol\":\"WBTC\",\"chain\":\"pharos-atlantic-testnet\",\"initialCapital\":1000,\"useOpenAI\":false}}}"
 ```
 
 Expected markers in the tool result payload:
@@ -83,8 +83,8 @@ Expected markers in the tool result payload:
     "onChainWrites": false
   },
   "dataSourceSummary": {
-    "type": "deterministic-sample",
-    "marketEvidence": false
+    "type": "Friend server Binance spot 1h OHLCV CSV snapshot",
+    "marketEvidence": true
   },
   "artifact": {
     "artifactId": "...",
@@ -98,6 +98,8 @@ The backtest matrix should include:
 ```text
 1D, 1W, 1M, 6M, 1Y, 2Y, 3Y
 ```
+
+Set `symbol` to `WETH` to run the same path on the ETHUSDT three-year proxy dataset.
 
 ## 5. x402 Scaffold
 

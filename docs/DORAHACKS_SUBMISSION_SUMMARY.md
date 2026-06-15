@@ -122,7 +122,7 @@ If `PRIVATE_KEY` is configured in the runtime environment, it is used only for l
 5. Call the health endpoint.
 6. Call MCP `tools/list`.
 7. Call `pharos_network_status` and confirm `chainId = 688689`.
-8. Run `quant_loop_run` for a PHRS research strategy.
+8. Run `quant_loop_run` for a WBTC research strategy using BTCUSDT three-year proxy candles. Use `symbol=WETH` for the ETHUSDT proxy path.
 9. Run the modular chain if deeper evaluation is needed:
    `strategy_generate -> strategy_validate -> strategy_backtest_matrix -> strategy_advise -> strategy_simulate -> strategy_export_artifact`.
 10. Confirm artifact safety flags keep live execution disabled.
@@ -168,7 +168,7 @@ Latest observed results:
 - Public health endpoint responded successfully.
 - Public `tools/list` exposed all 10 core tools and optional x402 payment-prep tools.
 - Public `pharos_network_status` returned `atlantic-testnet` and chain ID `688689`.
-- Public deterministic `quant_loop_run` completed successfully and exported an artifact.
+- Public deterministic `quant_loop_run` completed successfully on WBTC proxy market data and exported an artifact.
 
 See `docs/DEMO_TRANSCRIPT.md` for the latest public endpoint transcript.
 

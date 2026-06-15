@@ -8,7 +8,99 @@ export interface StrategyPreset {
   tags: string[];
 }
 
+function wrappedTrendProxyCode(asset: 'WBTC' | 'WETH', proxyPair: 'BTCUSDT' | 'ETHUSDT') {
+  return `// ${asset} trend proxy preset using ${proxyPair} 1H market candles
+var BASE_BUY_AMOUNT_U = 35;
+var MAX_EXPOSURE_PCT = 0.55;
+var TAKE_PROFIT_PCT = 0.035;
+var STOP_LOSS_PCT = 0.075;
+var RSI_BUY_BELOW = 54;
+var RSI_RISK_OFF_ABOVE = 74;
+var ATR_RISK_PCT = 0.045;
+var COOLDOWN_BARS = 8;
+var PROBE_ENTRY_AFTER_BARS = 36;
+
+exports.evaluate = function(ctx) {
+  var state = ctx.state || {};
+  var price = ctx.candle.close;
+  var avg = ctx.position.avgEntryPrice || 0;
+  var indicators = ctx.indicators || {};
+  var ema20 = Number(indicators.ema20 || price);
+  var ema50 = Number(indicators.ema50 || price);
+  var rsi14 = Number(indicators.rsi14 || 50);
+  var atr14 = Number(indicators.atr14 || 0);
+  var lastBuyIndex = Number(state.lastBuyIndex || -999999);
+  var exposure = ctx.equity > 0 ? (ctx.position.baseAmount * price) / ctx.equity : 0;
+  var trendOk = ema20 >= ema50 && price >= ema20 * 0.995;
+  var volatilityPct = price > 0 ? atr14 / price : 0;
+  var volatilityOk = volatilityPct <= ATR_RISK_PCT;
+  var cooledDown = ctx.index - lastBuyIndex >= COOLDOWN_BARS;
+  var warm = ctx.index >= PROBE_ENTRY_AFTER_BARS;
+
+  if (ctx.position.baseAmount > 0 && avg > 0 && (price <= avg * (1 - STOP_LOSS_PCT) || (!trendOk && rsi14 >= RSI_RISK_OFF_ABOVE))) {
+    return {
+      action: 'SELL',
+      fraction: 1,
+      reason: '${asset} proxy risk-off exit from stop-loss, weak trend, or overheated RSI.',
+      statePatch: { lastBuyIndex: ctx.index, riskMode: true }
+    };
+  }
+
+  if (ctx.position.baseAmount > 0 && avg > 0 && price >= avg * (1 + TAKE_PROFIT_PCT)) {
+    return {
+      action: 'SELL',
+      fraction: 0.5,
+      reason: '${asset} proxy partial take-profit above average entry.',
+      statePatch: { lastBuyIndex: ctx.index, riskMode: false }
+    };
+  }
+
+  if (
+    warm &&
+    cooledDown &&
+    trendOk &&
+    volatilityOk &&
+    rsi14 <= RSI_BUY_BELOW &&
+    exposure < MAX_EXPOSURE_PCT &&
+    ctx.position.quoteBalance >= BASE_BUY_AMOUNT_U &&
+    !state.riskMode
+  ) {
+    var volatilityScale = Math.max(0.35, 1 - volatilityPct / ATR_RISK_PCT);
+    return {
+      action: 'BUY',
+      amountUsd: Math.min(BASE_BUY_AMOUNT_U * volatilityScale, ctx.position.quoteBalance),
+      reason: '${asset} proxy trend/DCA entry using EMA, RSI, ATR, cooldown, and exposure guard.',
+      statePatch: { lastBuyIndex: ctx.index, riskMode: false }
+    };
+  }
+
+  return {
+    action: 'HOLD',
+    reason: '${asset} proxy conditions are not aligned for entry or exit.',
+    statePatch: { riskMode: state.riskMode && trendOk && rsi14 < 62 ? false : state.riskMode }
+  };
+};`;
+}
+
 export const strategyPresets: StrategyPreset[] = [
+  {
+    id: 'wbtc-trend-proxy',
+    name: 'WBTC Trend Proxy',
+    description: 'WBTC research strategy using BTCUSDT three-year 1H proxy candles with EMA trend, RSI, ATR, cooldown, and exposure guards.',
+    symbol: 'WBTC',
+    chain: 'pharos-atlantic-testnet',
+    tags: ['wbtc', 'btc-proxy', 'binance', 'trend-filter', 'risk-managed'],
+    code: wrappedTrendProxyCode('WBTC', 'BTCUSDT'),
+  },
+  {
+    id: 'weth-trend-proxy',
+    name: 'WETH Trend Proxy',
+    description: 'WETH research strategy using ETHUSDT three-year 1H proxy candles with EMA trend, RSI, ATR, cooldown, and exposure guards.',
+    symbol: 'WETH',
+    chain: 'pharos-atlantic-testnet',
+    tags: ['weth', 'eth-proxy', 'binance', 'trend-filter', 'risk-managed'],
+    code: wrappedTrendProxyCode('WETH', 'ETHUSDT'),
+  },
   {
     id: 'pros-dca-guarded',
     name: 'PROS Guarded DCA',

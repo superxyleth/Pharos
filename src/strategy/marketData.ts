@@ -104,11 +104,12 @@ function parseCsvCandles(raw: string): Candle[] {
     .filter((candle) => Number.isFinite(candle.time) && Number.isFinite(candle.close));
 }
 
-export function summarizePreferredMarketData() {
-  const loaded = loadPreferredMarketCandles('PROS');
+export function summarizePreferredMarketData(symbol = 'WBTC') {
+  const loaded = loadPreferredMarketCandles(symbol);
   if (!loaded) {
     return {
       available: false,
+      symbol,
       note: 'No preferred local market dataset is available.',
     };
   }
@@ -116,6 +117,7 @@ export function summarizePreferredMarketData() {
   const last = loaded.candles.at(-1)!;
   return {
     available: true,
+    symbol,
     datasetId: loaded.dataset.datasetId,
     pair: loaded.dataset.pair,
     exchange: loaded.dataset.exchange,

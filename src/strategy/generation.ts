@@ -24,7 +24,7 @@ export async function generateStrategyCode(params: {
 }> {
   const user = [
     `Target chain: ${params.chain ?? 'pharos-atlantic-testnet'}`,
-    `Target symbol: ${params.symbol ?? 'PHRS'}`,
+    `Target symbol: ${params.symbol ?? 'WBTC'}`,
     `Initial capital: ${params.initialCapital ?? 1000}`,
     `User strategy request: ${params.description}`,
     '',

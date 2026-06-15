@@ -88,8 +88,8 @@ One-call deterministic review path:
   "params": {
     "name": "quant_loop_run",
     "arguments": {
-      "description": "Generate a PHRS grid and DCA research strategy with trend filter, volatility filter, risk-off exit, and max exposure control. Run full multi-period backtests, produce risk-aware advice, simulate decisions, and export a reusable artifact.",
-      "symbol": "PHRS",
+      "description": "Generate a WBTC trend and DCA research strategy using BTCUSDT three-year proxy candles, with volatility filter, risk-off exit, and max exposure control. Run full multi-period backtests, produce risk-aware advice, simulate decisions, and export a reusable artifact.",
+      "symbol": "WBTC",
       "chain": "pharos-atlantic-testnet",
       "initialCapital": 1000,
       "useOpenAI": false
@@ -106,7 +106,8 @@ Expected checks:
 - `executionModeSummary.providerTimeoutMs = 90000`.
 - Tool result payload includes `result.artifact.artifactId` and `result.artifact.codeHash`.
 - `safetySummary.phase1Safe = true`.
-- `dataSourceSummary.type = deterministic-sample` for the deterministic judging path.
+- `dataSourceSummary.marketEvidence = true` using the local BTCUSDT three-year proxy dataset for WBTC.
+- Optional comparison path: set `symbol = WETH` to use the ETHUSDT three-year proxy dataset.
 - `liveTrading.enabled = false`.
 - `broadcastTransactions = false`.
 - `onChainWrites = false`.
@@ -157,6 +158,17 @@ Reproducibility notes:
 - `PRIVATE_KEY` is not required for public evaluation. Wallet output is read-only and does not return private keys.
 - `npm run test:openai` is optional and only checks the AI provider path.
 - `npm audit --registry=https://registry.npmjs.org/` is expected to report 0 vulnerabilities. See `docs/DEPENDENCY_AUDIT.md`.
+
+## Review Market Data
+
+The recommended judge strategy path now uses long-history wrapped-asset proxy data:
+
+- `WBTC` uses Binance spot `BTCUSDT` 1H candles as the underlying price proxy.
+- `WETH` uses Binance spot `ETHUSDT` 1H candles as the underlying price proxy.
+- Both proxy datasets cover `2023-06-14T00:00:00Z` to `2026-06-13T23:00:00Z` with 26,304 hourly candles.
+- These are real market candles for research backtests, not Pharos DEX liquidity, swap execution, or on-chain pool evidence.
+
+The PROS/USDT OKX dataset remains available for PROS-specific research, but WBTC/WETH are better for judging strategy behavior across a longer market window.
 
 ## Artifact Reuse For Future Agents
 

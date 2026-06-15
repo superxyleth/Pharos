@@ -5,10 +5,10 @@
   "params": {
     "name": "quant_loop_run",
     "arguments": {
-      "description": "Use 0.5U total capital. Buy 0.05U every hour, up to 10 buys, then sell all when price is 2% above average entry.",
-      "symbol": "PHRS",
+      "description": "Generate a WBTC trend and DCA research strategy using BTCUSDT three-year proxy candles, with volatility filter, risk-off exit, and max exposure control.",
+      "symbol": "WBTC",
       "chain": "pharos-atlantic-testnet",
-      "initialCapital": 0.5,
+      "initialCapital": 1000,
       "useOpenAI": true
     }
   }

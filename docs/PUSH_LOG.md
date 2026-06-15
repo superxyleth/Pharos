@@ -481,3 +481,35 @@ M README.md
 ?? src/strategy/marketData.ts
 ?? src/strategy/presets.ts
 ```
+
+### 20260616-021408 prefer WBTC WETH long-history proxy strategy path
+
+- Branch: `main`
+- Previous HEAD: `832decd`
+- Memory tag: `memory/20260616-021408-prefer-wbtc-weth-long-history-proxy-stra`
+- Executed:
+  - Updated `docs/PUSH_LOG.md`
+  - Staged current tracked and untracked safe files
+  - Created a Git commit
+  - Created an annotated memory tag
+  - Pushed branch and tags to `origin`
+- Workspace changes before push:
+```text
+M README.md
+ M docs/DEMO_FLOW.md
+ M docs/DORAHACKS_SUBMISSION_SUMMARY.md
+ M docs/JUDGE_DEMO_60_SECONDS.md
+ M examples/backtest-with-external-candles.json
+ M examples/demo-json-rpc-flow.md
+ M examples/evaluator-prompt.md
+ M examples/quant-loop-run.json
+ M examples/strategy-backtest-matrix.json
+ M examples/strategy-backtest.json
+ M examples/strategy-generate.json
+ M references/evaluation-guide.md
+ M scripts/judge-smoke.mjs
+ M src/strategy/generation.ts
+ M src/strategy/marketData.ts
+ M src/strategy/presets.ts
+ M src/tools/loopTools.ts
+```

@@ -26,13 +26,13 @@ export function registerLoopTools(server: McpServer) {
       description: 'Run the Phase 1 closed loop: generate strategy, validate, multi-period backtest, advise, simulate, and export an artifact. No live trading.',
       inputSchema: {
         description: z.string().min(1).describe('Natural-language quant strategy request.'),
-        symbol: z.string().optional().describe('Target symbol, default PROS when local OKX market data is available.'),
+        symbol: z.string().optional().describe('Target symbol, default WBTC using local BTCUSDT 3-year proxy candles. Use WETH for ETHUSDT proxy candles.'),
         chain: z.string().optional().describe('Target chain, default pharos-atlantic-testnet.'),
         initialCapital: z.number().positive().optional().describe('Research capital.'),
         useOpenAI: z.boolean().optional().describe('Use OpenAI generation when configured; fallback template is used otherwise.'),
       },
     },
-    async ({ description, symbol = 'PROS', chain = 'pharos-atlantic-testnet', initialCapital = 1000, useOpenAI = true }) => {
+    async ({ description, symbol = 'WBTC', chain = 'pharos-atlantic-testnet', initialCapital = 1000, useOpenAI = true }) => {
       try {
         const steps: Array<Record<string, unknown>> = [];
         let generated;
@@ -138,7 +138,7 @@ export function registerLoopTools(server: McpServer) {
           success: true,
           stage: 'phase1_skill_closed_loop',
           safetySummary: phase1SafetySummary,
-          marketDataSummary: summarizePreferredMarketData(),
+          marketDataSummary: summarizePreferredMarketData(symbol),
           dataSourceSummary: summarizeDataSource(backtests),
           steps,
           generated,

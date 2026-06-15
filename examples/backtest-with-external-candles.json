@@ -5,9 +5,9 @@
   "params": {
     "name": "strategy_backtest_matrix",
     "arguments": {
-      "symbol": "PHRS",
+      "symbol": "WBTC",
       "initialCapital": 1000,
-      "code": "exports.evaluate = function(ctx) {\n  if (ctx.index < 2) return { action: 'HOLD', reason: 'warmup' };\n  const previous = ctx.candles[ctx.index - 1];\n  if (ctx.candle.close > previous.close * 1.01) return { action: 'BUY', amountUsd: 50, reason: 'external candle momentum' };\n  if (ctx.position.base > 0 && ctx.candle.close < previous.close * 0.99) return { action: 'SELL', fraction: 1, reason: 'external candle risk-off' };\n  return { action: 'HOLD', reason: 'no signal' };\n};",
+      "code": "exports.evaluate = function(ctx) {\n  if (ctx.index < 2) return { action: 'HOLD', reason: 'warmup' };\n  const previous = ctx.candles[ctx.index - 1];\n  if (ctx.candle.close > previous.close * 1.01) return { action: 'BUY', amountUsd: 50, reason: 'external candle momentum' };\n  if (ctx.position.baseAmount > 0 && ctx.candle.close < previous.close * 0.99) return { action: 'SELL', fraction: 1, reason: 'external candle risk-off' };\n  return { action: 'HOLD', reason: 'no signal' };\n};",
       "candles": [
         { "time": 1717200000000, "open": 1.0000, "high": 1.0120, "low": 0.9950, "close": 1.0060, "volume": 12000 },
         { "time": 1717203600000, "open": 1.0060, "high": 1.0180, "low": 1.0000, "close": 1.0150, "volume": 14100 },

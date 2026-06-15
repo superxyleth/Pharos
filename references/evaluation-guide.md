@@ -62,13 +62,15 @@ Suggested request:
 
 ```json
 {
-  "description": "Generate a PHRS grid and DCA research strategy, run multi-period backtests, produce risk advice, simulate decisions, and export an artifact.",
-  "symbol": "PHRS",
+  "description": "Generate a WBTC trend and DCA research strategy using BTCUSDT three-year proxy candles, run multi-period backtests, produce risk advice, simulate decisions, and export an artifact.",
+  "symbol": "WBTC",
   "chain": "pharos-atlantic-testnet",
   "initialCapital": 1000,
   "useOpenAI": false
 }
 ```
+
+For the ETH path, use the same request with `symbol = WETH`; it will use ETHUSDT three-year proxy candles.
 
 Use `useOpenAI=false` as the baseline judging path because it is deterministic, does not depend on external model latency, and still exercises generation, validation, multi-period backtesting, advice, simulation, and artifact export.
 
@@ -81,8 +83,9 @@ Expected safety and data-source markers:
 - `safetySummary.onChainWrites = false`
 - `result.artifact.artifactId` is present
 - `result.artifact.codeHash` is present
-- `dataSourceSummary.type = deterministic-sample` for the deterministic baseline
-- `dataSourceSummary.marketEvidence = false` for deterministic sample candles
+- `dataSourceSummary.marketEvidence = true` for WBTC/WETH proxy market candles
+- `backtestSummary[].dataQuality.datasetId` includes `binance:BTCUSDT:1H:last3y:wbtc-proxy` for WBTC or `binance:ETHUSDT:1H:last3y:weth-proxy` for WETH
+- `backtestSummary[].dataQuality.limitations` states that BTCUSDT/ETHUSDT spot candles are proxy market data, not Pharos DEX liquidity or execution evidence
 
 ## Step 5: Run Modular Tool Chain
 

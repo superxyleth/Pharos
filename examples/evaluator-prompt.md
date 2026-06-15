@@ -20,7 +20,7 @@ Evaluation goals:
 4. Check the Standard Execution Loop: intent -> input validation -> tools/list -> network status -> generate/validate/backtest/advise/simulate/export -> verify safety -> report.
 5. Verify that MCP tools/list exposes the expected tools.
 6. Verify Pharos Atlantic Testnet status through pharos_network_status.
-7. Run quant_loop_run for a PHRS grid/DCA research strategy.
+7. Run quant_loop_run for a WBTC trend/DCA research strategy using BTCUSDT three-year proxy candles. Optionally repeat with WETH.
 8. Run the modular chain: strategy_generate -> strategy_validate -> strategy_backtest_matrix -> strategy_advise -> strategy_simulate -> strategy_export_artifact.
 9. Pass the compact matrix result directly into strategy_advise and strategy_export_artifact without manually reshaping it.
 10. Check that strategy_export_artifact supports includeCode=false and returns result.artifact.artifactId/result.artifact.codeHash.
