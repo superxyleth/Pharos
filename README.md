@@ -2,13 +2,19 @@
 
 [![CI](https://github.com/superxyleth/Pharos/actions/workflows/ci.yml/badge.svg)](https://github.com/superxyleth/Pharos/actions/workflows/ci.yml)
 
-Pharos Quant Strategy Lifecycle Skill is a Phase 1 MCP Skill that lets AI Agents generate, validate, backtest, simulate, and export reusable PHRS strategy artifacts on Pharos Atlantic Testnet, with no live trading or transaction broadcasting.
+Pharos Quant Strategy Lifecycle Skill is a Phase 1 MCP Skill that lets AI Agents generate, validate, backtest, simulate, and export reusable WBTC, WETH, and PHRS research strategy artifacts on Pharos Atlantic Testnet, with no live trading or transaction broadcasting.
+
+For judges:
+
+- Start with `docs/JUDGE_REPORT.md` for the formal review summary, tested assertions, and known limitations.
+- Use `docs/JUDGE_DEMO_60_SECONDS.md` for the shortest copy-paste public MCP test.
+- The recommended strategy path is `WBTC` first, with `WETH` as the ETH proxy comparison path.
 
 ## 60-Second Judge Summary
 
 This is Agent Skill infrastructure for Pharos Phase 1, not an alpha-seeking trading bot.
 
-AI Agents can use this reusable MCP Skill to convert natural-language PHRS strategy ideas into sandbox-validated JavaScript strategy code, run deterministic multi-period backtests, produce risk-aware advice, simulate decisions without execution, and export reusable Phase 2 strategy artifacts with safety flags and code hashes.
+AI Agents can use this reusable MCP Skill to convert natural-language WBTC, WETH, or PHRS strategy ideas into sandbox-validated JavaScript strategy code, run deterministic multi-period backtests, produce risk-aware advice, simulate decisions without execution, and export reusable Phase 2 strategy artifacts with safety flags and code hashes.
 
 The core review path is free and safe by design:
 

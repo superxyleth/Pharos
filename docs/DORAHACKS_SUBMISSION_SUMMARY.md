@@ -115,6 +115,11 @@ If `PRIVATE_KEY` is configured in the runtime environment, it is used only for l
 
 ## Recommended Review Flow
 
+Start here:
+
+- `docs/JUDGE_REPORT.md`: formal review summary, tested assertions, x402 status matrix, and known limitations.
+- `docs/JUDGE_DEMO_60_SECONDS.md`: shortest copy-paste public MCP smoke path.
+
 1. Read `SKILL.md`.
 2. Read `references/overview.md`.
 3. Read `references/safety-and-phase1-boundary.md`.
