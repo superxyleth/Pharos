@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { getStaticPharosIntegrationSummary } from '../pharos.js';
 import type { BacktestResult } from './types.js';
 import { validateStrategyCode } from './validate.js';
 
@@ -10,6 +11,7 @@ export function exportStrategyArtifact(params: {
   chain?: string;
   backtests?: BacktestResult[];
   includeCode?: boolean;
+  pharosIntegrationSummary?: ReturnType<typeof getStaticPharosIntegrationSummary>;
 }) {
   const validation = validateStrategyCode(params.code);
   const codeHash = `sha256:${createHash('sha256').update(params.code).digest('hex')}`;
@@ -32,6 +34,7 @@ export function exportStrategyArtifact(params: {
       chain: params.chain ?? 'pharos-atlantic-testnet',
       symbol: params.symbol ?? 'PHRS',
     },
+    chainContext: params.pharosIntegrationSummary ?? getStaticPharosIntegrationSummary(),
     codeHash,
     ...(params.includeCode === false ? {} : { code: params.code }),
     validation,
@@ -68,6 +71,7 @@ export function exportStrategyArtifact(params: {
       stabilityScore: result.stabilityScore,
       capitalEfficiencyScore: result.capitalEfficiencyScore,
       strategyQuality: result.strategyQuality,
+      benchmarks: result.benchmarks,
     })),
     safetySummary,
     safety: {

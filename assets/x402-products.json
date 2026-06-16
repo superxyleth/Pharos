@@ -3,6 +3,9 @@
   "network": "eip155:688689",
   "chainId": 688689,
   "enabledByDefault": false,
+  "activePaymentMode": "native-phrs-receipt",
+  "activeAsset": "PHRS",
+  "activeSettlement": "server-verifies-existing-onchain-transfer",
   "settlementBroadcastEnabled": false,
   "onChainWritesEnabled": false,
   "products": [

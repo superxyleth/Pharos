@@ -49,6 +49,34 @@ export interface StrategyQuality {
   notes: string[];
 }
 
+export interface BenchmarkResult {
+  id: 'buy-and-hold' | 'ema-trend-baseline' | 'rsi-mean-reversion-baseline';
+  name: string;
+  description: string;
+  finalEquity: number;
+  totalReturnPct: number;
+  maxDrawdownPct: number;
+  exposurePct: number;
+  totalTrades: number;
+}
+
+export interface BenchmarkComparison {
+  strategyReturnPct: number;
+  buyAndHoldReturnPct: number;
+  bestBaselineId: BenchmarkResult['id'];
+  bestBaselineReturnPct: number;
+  strategyVsBuyAndHoldPct: number;
+  strategyVsBestBaselinePct: number;
+  note: string;
+}
+
+export interface BenchmarkSummary {
+  buyAndHold: BenchmarkResult;
+  emaTrendBaseline: BenchmarkResult;
+  rsiMeanReversionBaseline: BenchmarkResult;
+  comparison: BenchmarkComparison;
+}
+
 export type StrategyAction = 'BUY' | 'SELL' | 'HOLD';
 
 export interface StrategyDecision {
@@ -121,6 +149,7 @@ export interface BacktestResult {
   stabilityScore: number;
   capitalEfficiencyScore: number;
   strategyQuality: StrategyQuality;
+  benchmarks: BenchmarkSummary;
   trades: Trade[];
   equityCurve: Array<{ time: number; equity: number; drawdownPct: number }>;
 }

@@ -57,9 +57,20 @@ safetySummary.phase1Safe = true
 liveTrading.enabled = false
 artifact.artifactId exists
 artifact.codeHash exists
+artifact.chainContext.chainId = 688689
+pharosIntegrationSummary.onChainWritesEnabled = false
+pharosIntegrationSummary.marketDataNativeToPharos = false
 backtestSummary has 7 periods
+backtestSummary[].benchmarks.buyAndHold exists
+backtestSummary[].benchmarks.comparison exists
 dataSourceSummary.marketEvidence = true
 backtestSummary[].dataQuality.datasetId = binance:BTCUSDT:1H:last3y:wbtc-proxy
+```
+
+Use strict smoke mode after deploying the current working-tree improvements:
+
+```bash
+npm run judge:smoke:strict
 ```
 
 ## Market Data
@@ -88,6 +99,38 @@ They are not Pharos DEX pool candles, liquidity evidence, swap execution evidenc
 ```
 
 PROS/USDT OKX market data remains available for PROS-specific research, but WBTC/WETH are the recommended review path because they provide longer and richer market history.
+
+## Benchmark Comparisons
+
+Each backtest period now includes research-only baseline comparisons:
+
+```text
+buyAndHold
+emaTrendBaseline
+rsiMeanReversionBaseline
+comparison.strategyVsBuyAndHoldPct
+comparison.strategyVsBestBaselinePct
+```
+
+These baselines are included so Agents and judges can compare the generated strategy against simple alternatives. They are diagnostics only and do not imply live execution, alpha claims, or trading authorization.
+
+## Pharos Read-Only Evidence
+
+`quant_loop_run` returns a `pharosIntegrationSummary` and exported artifacts include `chainContext`.
+
+Expected markers:
+
+```text
+network = atlantic-testnet
+chainId = 688689
+nativeToken = PHRS
+readOnlyRpcChecked = true when the RPC check succeeds
+blockNumberAtRun exists when the RPC check succeeds
+onChainWritesEnabled = false
+marketDataNativeToPharos = false
+```
+
+This is intentional Phase 1 behavior: the Skill proves Pharos Atlantic runtime readiness without adding transaction signing, settlement, or DEX execution.
 
 ## Tested MCP Tools
 
@@ -141,6 +184,29 @@ future paid dry-run execution-plan access
 future separation from a dedicated execution Skill
 ```
 
+Production settlement readiness checklist:
+
+```text
+public PHRS receipt verification is implemented for the reviewable paid routes
+production settlement can be separated into a dedicated payment service later
+paid artifact storage should be separated from the Phase 1 research runtime
+any execution workflow should live in a separate guarded Phase 2 Skill
+settlementBroadcastEnabled and onChainWritesEnabled remain false in Phase 1
+```
+
+Current public x402 payment mode:
+
+```text
+network = eip155:688689
+scheme = exact
+asset = PHRS
+verificationMode = native-phrs-receipt
+facilitatorUrl = null
+settlement = server verifies an existing public-chain transfer receipt
+```
+
+Judges can verify the paid route by calling a protected endpoint without payment and observing HTTP `402`, then submitting a base64 JSON `PAYMENT-SIGNATURE` with a confirmed Pharos Atlantic PHRS transfer txHash. This is separate from the free core MCP judge path.
+
 Disabled for Phase 1 safety:
 
 ```text
@@ -188,6 +254,8 @@ npm run validate:skill
 npm run typecheck
 npm test
 npm run judge:smoke
+npm run judge:smoke:strict
+npm run audit:security
 ```
 
 Public smoke:

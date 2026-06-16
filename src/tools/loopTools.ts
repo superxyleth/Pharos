@@ -1,6 +1,7 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { textResult, errorResult } from '../mcpResponse.js';
+import { getPharosIntegrationSummary } from '../pharos.js';
 import { adviseStrategy } from '../strategy/advisor.js';
 import { runBacktestMatrix } from '../strategy/backtest.js';
 import { exportStrategyArtifact } from '../strategy/artifact.js';
@@ -35,6 +36,7 @@ export function registerLoopTools(server: McpServer) {
     async ({ description, symbol = 'WBTC', chain = 'pharos-atlantic-testnet', initialCapital = 1000, useOpenAI = true }) => {
       try {
         const steps: Array<Record<string, unknown>> = [];
+        const pharosIntegrationSummary = await getPharosIntegrationSummary();
         let generated;
         const generateStarted = Date.now();
         if (useOpenAI) {
@@ -126,6 +128,7 @@ export function registerLoopTools(server: McpServer) {
           symbol,
           chain,
           backtests,
+          pharosIntegrationSummary,
         });
         steps.push({
           name: 'export_artifact',
@@ -138,6 +141,7 @@ export function registerLoopTools(server: McpServer) {
           success: true,
           stage: 'phase1_skill_closed_loop',
           safetySummary: phase1SafetySummary,
+          pharosIntegrationSummary,
           marketDataSummary: summarizePreferredMarketData(symbol),
           dataSourceSummary: summarizeDataSource(backtests),
           steps,
@@ -168,6 +172,7 @@ export function registerLoopTools(server: McpServer) {
             stabilityScore: result.stabilityScore,
             capitalEfficiencyScore: result.capitalEfficiencyScore,
             strategyQuality: result.strategyQuality,
+            benchmarks: result.benchmarks,
           })),
           advice,
           executionModeSummary: {

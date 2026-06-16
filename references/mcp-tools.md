@@ -148,11 +148,11 @@ This is the recommended demo and evaluator entry point.
 
 ## Optional x402 Tools
 
-The following tools expose optional x402-style paid gateway scaffolding. They do not settle payments, sign transactions, broadcast payments, or execute trades.
+The following tools expose optional x402-style paid access with PHRS receipt verification. They do not settle payments, sign transactions, broadcast payments, or execute trades.
 
 ### `x402_payment_status`
 
-Returns whether the optional x402 gateway is enabled, which network it targets, whether receiver and facilitator configuration is present, and whether settlement broadcasting or on-chain writes are enabled.
+Returns whether the optional x402 gateway is enabled, which network it targets, the active PHRS payment mode, and whether settlement broadcasting or on-chain writes are enabled.
 
 Expected safe defaults:
 
@@ -178,6 +178,6 @@ The response is a quote only. It does not transfer funds or settle payment.
 
 ### `x402_receipt_verify`
 
-Checks a receipt scaffold and returns whether it is accepted by the current configuration.
+Checks a public Pharos Atlantic PHRS transfer receipt and returns whether it satisfies the quoted payment requirements.
 
-By default it returns verification scaffolding only. Production payment settlement should be delegated to an official x402 facilitator or a separate payment Skill.
+The verifier reads an existing transaction hash supplied by the payer. It does not sign, broadcast, or settle payments on behalf of the payer.

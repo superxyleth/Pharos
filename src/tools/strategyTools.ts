@@ -56,6 +56,7 @@ const backtestResultSchema = z.object({
   stabilityScore: z.number().optional(),
   capitalEfficiencyScore: z.number().optional(),
   strategyQuality: z.record(z.string(), z.unknown()).optional(),
+  benchmarks: z.record(z.string(), z.unknown()).optional(),
   trades: z.array(z.any()).optional(),
   equityCurve: z.array(z.any()).optional(),
 });
@@ -308,6 +309,7 @@ function summarizeBacktest(result: ReturnType<typeof runBacktest>) {
     stabilityScore: result.stabilityScore,
     capitalEfficiencyScore: result.capitalEfficiencyScore,
     strategyQuality: result.strategyQuality,
+    benchmarks: result.benchmarks,
     trades: [],
     equityCurve: [],
     detailMode: 'compact',
@@ -371,8 +373,39 @@ function toBacktestResult(result: ParsedBacktestResult): BacktestResult {
       usesPrecomputedIndicators: false,
       notes: [],
     },
+    benchmarks: result.benchmarks as any ?? unknownBenchmarks(result.totalReturnPct),
     trades: result.trades ?? [],
     equityCurve: result.equityCurve ?? [],
+  };
+}
+
+function unknownBenchmarks(strategyReturnPct: number) {
+  return {
+    buyAndHold: unknownBenchmark('buy-and-hold'),
+    emaTrendBaseline: unknownBenchmark('ema-trend-baseline'),
+    rsiMeanReversionBaseline: unknownBenchmark('rsi-mean-reversion-baseline'),
+    comparison: {
+      strategyReturnPct,
+      buyAndHoldReturnPct: 0,
+      bestBaselineId: 'buy-and-hold',
+      bestBaselineReturnPct: 0,
+      strategyVsBuyAndHoldPct: strategyReturnPct,
+      strategyVsBestBaselinePct: strategyReturnPct,
+      note: 'Benchmark fields were not provided by the caller; values are placeholders for artifact compatibility.',
+    },
+  };
+}
+
+function unknownBenchmark(id: 'buy-and-hold' | 'ema-trend-baseline' | 'rsi-mean-reversion-baseline') {
+  return {
+    id,
+    name: id,
+    description: 'Not provided by caller.',
+    finalEquity: 0,
+    totalReturnPct: 0,
+    maxDrawdownPct: 0,
+    exposurePct: 0,
+    totalTrades: 0,
   };
 }
 

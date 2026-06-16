@@ -138,6 +138,24 @@ POST /paid/quant-report
 POST /paid/dry-run-plan
 ```
 
+The current public paid-access mode is PHRS-only:
+
+```text
+Mode:       PHRS native receipt verification
+Network:    eip155:688689
+Chain ID:   688689
+Asset:      PHRS
+Settlement: server verifies an existing public-chain transfer receipt
+Status:     real 0.01 PHRS payment verified and paid route unlocked
+Tx:         0x196d9b9deb4aea43510245350977792cb7a0a43dac562e6b1e7adf952b57c28d
+Explorer:   https://atlantic.pharosscan.xyz/tx/0x196d9b9deb4aea43510245350977792cb7a0a43dac562e6b1e7adf952b57c28d
+Block:      24307082
+Route:      POST /paid/quant-report
+Result:     HTTP 200, PAYMENT-RESPONSE mode = native-phrs-receipt-verified
+```
+
+The main MCP research tools remain free. The x402 paid routes do not use localhost facilitator URLs and do not require an ERC20 test token. The service never signs or broadcasts payment transactions; payers send PHRS themselves and submit the confirmed txHash in `PAYMENT-SIGNATURE`.
+
 `/x402/quote` now accepts either:
 
 ```json
@@ -160,9 +178,12 @@ Current public x402 behavior:
 ```text
 enabled = true
 defaultAsset = PHRS
+activePaymentMode = native-phrs-receipt
+activeAsset = PHRS
 chainId = 688689
 settlementBroadcastEnabled = false
 onChainWritesEnabled = false
+PHRS receipt verification = live tested
 ```
 
 Phase 2 extension narrative:
@@ -203,6 +224,9 @@ npm run validate:skill
 npm run typecheck
 npm test
 npm run judge:smoke
+npm run judge:smoke:strict
+npm run audit:security
+npm run x402:smoke -- http://150.158.28.155:3011 --strict
 ```
 
 Confirmed results:
@@ -212,9 +236,12 @@ validate:skill = 115 checks passed
 typecheck = passed
 npm test = passed
 judge:smoke = passed, 0 failed checks
+judge:smoke:strict = passed against the public updated runtime, 0 failed checks
+audit:security = passed, found 0 vulnerabilities
+x402:smoke strict = passed against the public updated runtime, 0 failed checks
 ```
 
-Latest public judge smoke markers:
+Latest public strict judge smoke markers:
 
 ```text
 health status = ok
@@ -226,9 +253,25 @@ backtestPeriods = 7
 WBTC proxy marketEvidence = true
 artifactId exists
 codeHash exists
+artifact chainContext exists
+benchmark summaries exist for all 7 periods
+pharosIntegrationSummary exists
 liveTradingEnabled = false
 broadcastTransactions = false
 onChainWrites = false
+```
+
+Latest public x402 strict smoke markers:
+
+```text
+network = eip155:688689
+chainId = 688689
+activePaymentMode = native-phrs-receipt
+activeAsset = PHRS
+activeSettlement = server-verifies-existing-onchain-transfer
+quote.requirements.asset = PHRS
+quote.requirements.facilitatorUrl = null
+protected /paid/quant-report returns HTTP 402 without payment signature
 ```
 
 Latest public x402 direct quote test:
@@ -282,12 +325,21 @@ Deploy by uploading explicit changed files over SFTP, then run typecheck and res
 Do not bulk-delete server files.
 ```
 
+Current deployment status:
+
+```text
+The benchmark and Pharos chainContext improvements have been uploaded to the public server and the runtime has been restarted.
+npm run judge:smoke:strict passes against http://150.158.28.155:3011/mcp with 0 failed checks.
+Current public x402 mode is now PHRS native receipt verification only, with no public localhost facilitator dependency and no ERC20 test-token requirement.
+```
+
 ## Remaining Limitations
 
 Known and documented limitations:
 
 - WBTC/WETH datasets are CEX spot proxy data, not Pharos-native DEX or on-chain pool data.
 - Pharos integration is currently read-only RPC/wallet status plus Phase 2 artifact readiness.
+- `quant_loop_run` now returns Pharos read-only runtime context and explicit native market-data gap metadata, but still does not use Pharos DEX/oracle/indexer candles.
 - x402 is a safe Phase 2 paid-access extension layer, not full production settlement and not live execution.
 - Strategy returns are research diagnostics, not an alpha claim.
 
@@ -296,7 +348,7 @@ Known and documented limitations:
 Highest leverage next steps:
 
 1. Add Pharos-native market-data integration when a reliable DEX/oracle/indexer source is available.
-2. Add benchmark comparisons such as buy-and-hold, EMA baseline, and RSI-only baseline.
+2. Extend benchmark comparisons beyond buy-and-hold, EMA trend baseline, and RSI mean-reversion baseline if judges ask for deeper analysis.
 3. Keep the WBTC/WETH judge path stable and concise.
 4. Keep x402 positioned as Phase 2 paid-access infrastructure, with Phase 1 safety flags visible.
 5. Avoid adding new features that could blur the no-live-trading boundary before judging.

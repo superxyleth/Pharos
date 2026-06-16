@@ -188,38 +188,37 @@ PAYMENT-RESPONSE: <base64 verification metadata>
 
 No settlement, signing, broadcast, or on-chain write is performed by this demo path.
 
-## Official SDK Flow
+## Public PHRS Verification Flow
 
-Use this flow when testing the actual x402 SDK middleware and facilitator path.
-
-Terminal 1:
+Use this flow for the public review service:
 
 ```bash
-set X402_RECEIVER_ADDRESS=0x567E9De7f9A9c0DBe071781B89137892231d4450
-set X402_FACILITATOR_URL=http://localhost:4020
-set X402_ASSET_ADDRESS=0xE0BE08c77f415F577A1B3A9aD7a1Df1479564ec8
-set X402_ASSET_NAME=USDC
-set X402_ASSET_VERSION=2
-set X402_ASSET_DECIMALS=6
-npm run x402:facilitator
+curl -X POST http://150.158.28.155:3011/x402/quote \
+  -H "Content-Type: application/json" \
+  -d "{\"resource\":\"/paid/quant-report\",\"method\":\"POST\"}"
 ```
 
-Terminal 2:
+Expected quote markers:
+
+```text
+requirements.asset = PHRS
+requirements.verificationMode = native-phrs-receipt
+requirements.facilitatorUrl = null
+```
+
+After sending PHRS to the quoted `payTo`, encode the confirmed txHash:
 
 ```bash
-set X402_RECEIVER_ADDRESS=0x567E9De7f9A9c0DBe071781B89137892231d4450
-set X402_FACILITATOR_URL=http://localhost:4020
-set X402_ASSET_ADDRESS=0xE0BE08c77f415F577A1B3A9aD7a1Df1479564ec8
-set X402_ASSET_NAME=USDC
-set X402_ASSET_VERSION=2
-set X402_ASSET_DECIMALS=6
-npm run x402:server
+PAYMENT=$(printf '{"txHash":"0x...","payer":"0x..."}' | base64)
 ```
 
-Terminal 3:
+Then retry the paid route:
 
 ```bash
-npm run x402:client
+curl -i -X POST http://150.158.28.155:3011/paid/quant-report \
+  -H "Content-Type: application/json" \
+  -H "PAYMENT-SIGNATURE: $PAYMENT" \
+  -d "{\"symbol\":\"WBTC\"}"
 ```
 
-This standard path requires the payer wallet to hold the configured ERC20 asset and enough PHRS for gas. Native PHRS transfers are not a substitute for official EVM exact settlement unless the facilitator explicitly supports native PHRS.
+This flow verifies a public Pharos Atlantic PHRS transaction receipt. It does not sign, broadcast, settle, or execute trades.

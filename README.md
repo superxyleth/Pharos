@@ -233,15 +233,13 @@ Quote requests may use either a catalog product ID or a direct `resource + metho
 }
 ```
 
-Official x402 SDK demo scripts:
+PHRS receipt smoke test:
 
 ```bash
-npm run x402:facilitator
-npm run x402:server
-npm run x402:client
+npm run x402:smoke -- http://150.158.28.155:3011 --strict
 ```
 
-The official EVM `exact` flow requires an ERC20 `X402_ASSET_ADDRESS`; native PHRS transfers are useful for local receipt testing but are not the same as SDK settlement unless the facilitator supports native PHRS.
+The current public x402 path is PHRS-only. Quotes set `facilitatorUrl` to `null` and ask the payer to submit a confirmed Pharos Atlantic PHRS transfer `txHash` in `PAYMENT-SIGNATURE`.
 
 Optional MCP tools:
 
@@ -252,9 +250,9 @@ Optional MCP tools:
 
 Safety:
 
-- PHRS is used as the default local test asset for this Phase 2 extension layer; production x402 settlement should confirm facilitator support for native PHRS or use a supported ERC20 asset.
-- protected routes return `PAYMENT-REQUIRED` headers and accept `PAYMENT-SIGNATURE` for facilitator verification.
-- public paid routes also verify confirmed Pharos Atlantic native PHRS transaction hashes for the quoted `payTo`, amount, and resource binding.
+- PHRS is the only public paid-access asset for this Phase 2 extension layer.
+- protected routes return `PAYMENT-REQUIRED` headers and accept `PAYMENT-SIGNATURE` with a base64 JSON PHRS txHash payload.
+- public paid routes verify confirmed Pharos Atlantic native PHRS transaction hashes for the quoted `payTo`, amount, and resource binding.
 - native PHRS receipt verification binds a transaction hash to one quote/resource/method/payTo/amount tuple to prevent cross-resource replay.
 - core MCP tools remain free and reviewable.
 - x402 does not broadcast payments in this Phase 1 Skill.

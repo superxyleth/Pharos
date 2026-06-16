@@ -58,6 +58,11 @@ export interface X402VerificationResult {
   nextStep: string;
 }
 
+const ACTIVE_PAYMENT_MODE = 'native-phrs-receipt';
+const ACTIVE_ASSET = 'PHRS';
+const ACTIVE_SETTLEMENT = 'server-verifies-existing-onchain-transfer';
+const PHAROS_EXPLORER_TX_BASE_URL = 'https://atlantic.pharosscan.xyz/tx';
+
 const products: X402Product[] = [
   {
     id: 'paid-full-artifact',
@@ -66,7 +71,7 @@ const products: X402Product[] = [
     resource: '/paid/artifacts/:artifactId',
     method: 'GET',
     amount: appConfig.x402.defaultAmount,
-    asset: appConfig.x402.defaultAsset,
+    asset: ACTIVE_ASSET,
     output: 'Full artifact metadata, code hash, risk summary, and reusable schema reference.',
     phase1Safe: true,
   },
@@ -77,7 +82,7 @@ const products: X402Product[] = [
     resource: '/paid/quant-report',
     method: 'POST',
     amount: appConfig.x402.defaultAmount,
-    asset: appConfig.x402.defaultAsset,
+    asset: ACTIVE_ASSET,
     output: 'Extended strategy research report and Phase 2 dry-run planning notes.',
     phase1Safe: true,
   },
@@ -88,7 +93,7 @@ const products: X402Product[] = [
     resource: '/paid/dry-run-plan',
     method: 'POST',
     amount: appConfig.x402.defaultAmount,
-    asset: appConfig.x402.defaultAsset,
+    asset: ACTIVE_ASSET,
     output: 'Dry-run plan only. It is not execution authorization.',
     phase1Safe: true,
   },
@@ -100,14 +105,29 @@ export function getX402Status() {
   return {
     success: true,
     enabled: appConfig.x402.enabled,
-    mode: appConfig.x402.enabled ? 'payment-gateway-ready' : 'disabled-review-safe',
+    mode: appConfig.x402.enabled ? 'public-phrs-payment-gateway-ready' : 'disabled-review-safe',
     protocol: 'x402',
     network: appConfig.x402.network,
     chainId: appConfig.x402.chainId,
     receiverAddressConfigured: Boolean(appConfig.x402.receiverAddress),
-    facilitatorUrlConfigured: Boolean(appConfig.x402.facilitatorUrl),
-    defaultAsset: appConfig.x402.defaultAsset,
+    facilitatorUrlConfigured: false,
+    defaultAsset: ACTIVE_ASSET,
     defaultAmount: appConfig.x402.defaultAmount,
+    activePaymentMode: ACTIVE_PAYMENT_MODE,
+    activeAsset: ACTIVE_ASSET,
+    activeSettlement: ACTIVE_SETTLEMENT,
+    verificationMode: ACTIVE_PAYMENT_MODE,
+    paymentInstructions: {
+      network: 'Pharos Atlantic Testnet',
+      asset: ACTIVE_ASSET,
+      explorerTxBaseUrl: PHAROS_EXPLORER_TX_BASE_URL,
+      requiredHeader: 'PAYMENT-SIGNATURE',
+      payload: {
+        txHash: '0x...',
+        payer: '0x... optional payer address',
+      },
+      note: 'Submit a base64 JSON PAYMENT-SIGNATURE containing a confirmed Pharos Atlantic native PHRS transfer txHash. The server verifies the existing public-chain transaction receipt.',
+    },
     paymentRequiredHeader: 'PAYMENT-REQUIRED',
     paymentSignatureHeader: 'PAYMENT-SIGNATURE',
     paymentResponseHeader: 'PAYMENT-RESPONSE',
@@ -115,7 +135,7 @@ export function getX402Status() {
     devAcceptUnsignedReceipt: appConfig.x402.devAcceptUnsignedReceipt,
     settlementBroadcastEnabled: false,
     onChainWritesEnabled: false,
-    note: 'x402 is optional and disabled by default. This Phase 1 Skill exposes a safe Phase 2 paid-access extension layer; it does not broadcast payments or execute trades.',
+    note: 'x402 paid access is public-network PHRS receipt verification only. This service never signs or broadcasts payments; it verifies confirmed Pharos Atlantic transfers supplied by the payer.',
   };
 }
 
@@ -123,6 +143,9 @@ export function getX402Products() {
   return {
     success: true,
     enabled: appConfig.x402.enabled,
+    activePaymentMode: ACTIVE_PAYMENT_MODE,
+    activeAsset: ACTIVE_ASSET,
+    activeSettlement: ACTIVE_SETTLEMENT,
     products,
     safety: {
       paidRoutesAreOptional: true,
@@ -138,7 +161,7 @@ export function createX402Quote(input: X402QuoteInput) {
 
   const resource = input.resource ?? product.resource;
   const method = input.method ?? product.method;
-  const quoteId = hashQuote([product.id, resource, method, appConfig.x402.network, product.amount, product.asset].join('|'));
+  const quoteId = hashQuote([product.id, resource, method, appConfig.x402.network, product.amount, ACTIVE_ASSET].join('|'));
 
   const requirements = {
     scheme: 'exact',
@@ -147,15 +170,24 @@ export function createX402Quote(input: X402QuoteInput) {
     resource,
     method,
     payTo: appConfig.x402.receiverAddress ?? 'configure X402_RECEIVER_ADDRESS',
-    asset: product.asset,
+    asset: ACTIVE_ASSET,
     price: product.amount,
     maxAmountRequired: product.amount,
-    facilitatorUrl: appConfig.x402.facilitatorUrl ?? 'configure X402_FACILITATOR_URL',
+    facilitatorUrl: null,
+    verificationMode: ACTIVE_PAYMENT_MODE,
+    activeSettlement: ACTIVE_SETTLEMENT,
+    paymentSignatureFormat: 'base64-json',
+    paymentSignaturePayload: {
+      txHash: '0x...',
+      payer: '0x... optional payer address',
+    },
+    verificationNote: 'Send native PHRS on Pharos Atlantic to payTo, then submit the confirmed txHash in PAYMENT-SIGNATURE.',
+    explorerTxBaseUrl: PHAROS_EXPLORER_TX_BASE_URL,
     description: product.description,
     mimeType: 'application/json',
     output: product.output,
   };
-  const officialPaymentRequired = {
+  const paymentRequiredPayload = {
     x402Version: 1,
     accepts: [requirements],
     error: 'payment_required',
@@ -171,15 +203,18 @@ export function createX402Quote(input: X402QuoteInput) {
     paymentRequiredHeader: 'PAYMENT-REQUIRED',
     paymentSignatureHeader: 'PAYMENT-SIGNATURE',
     paymentResponseHeader: 'PAYMENT-RESPONSE',
-    paymentRequiredEncoded: encodeBase64Json(officialPaymentRequired),
-    officialPaymentRequired,
+    paymentRequiredEncoded: encodeBase64Json(paymentRequiredPayload),
+    paymentRequiredPayload,
     requirements,
+    activePaymentMode: ACTIVE_PAYMENT_MODE,
+    activeAsset: ACTIVE_ASSET,
+    activeSettlement: ACTIVE_SETTLEMENT,
     safety: {
       phase1Safe: true,
       settlementBroadcastEnabled: false,
       onChainWritesEnabled: false,
       privateKeyRequired: false,
-      note: 'The quote describes Phase 2 paid-access payment requirements only. This Skill does not settle, broadcast payments, or execute trades.',
+      note: 'The quote requires an existing public Pharos Atlantic PHRS transfer receipt. This Skill verifies the receipt and never settles, signs, broadcasts payments, or executes trades.',
     },
   };
 }
@@ -224,72 +259,19 @@ export async function verifyX402Receipt(input: X402ReceiptInput): Promise<X402Ve
     return nativePhRsVerification;
   }
 
-  if (appConfig.x402.enabled && appConfig.x402.facilitatorUrl && input.paymentPayload && input.paymentRequirements) {
-    const facilitatorUrl = appConfig.x402.facilitatorUrl.replace(/\/+$/, '');
-    try {
-      const response = await fetch(`${facilitatorUrl}/verify`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          paymentPayload: input.paymentPayload,
-          paymentRequirements: input.paymentRequirements,
-        }),
-      });
-      const data: unknown = await response.json().catch(() => ({
-        error: `Facilitator returned HTTP ${response.status} with a non-JSON body.`,
-      }));
-      const verified = isFacilitatorVerified(data);
-      return {
-        success: true,
-        verified,
-        mode: 'facilitator-verify-delegated',
-        quoteId: input.quoteId,
-        settlementBroadcastEnabled: false,
-        onChainWritesEnabled: false,
-        facilitator: {
-          url: facilitatorUrl,
-          delegated: true,
-          response: data,
-        },
-        reason: verified
-          ? 'The configured x402 facilitator accepted the payment payload. This Skill still does not call /settle or broadcast transactions.'
-          : 'The configured x402 facilitator did not verify the payment payload.',
-        nextStep: verified
-          ? 'Return the protected response and attach PAYMENT-RESPONSE metadata, or use a separate payment service for settlement.'
-          : 'Return 402 payment requirements and ask the client to submit a valid PAYMENT-SIGNATURE payload.',
-      };
-    } catch (error) {
-      return {
-        success: true,
-        verified: false,
-        mode: 'facilitator-verify-error',
-        quoteId: input.quoteId,
-        settlementBroadcastEnabled: false,
-        onChainWritesEnabled: false,
-        facilitator: {
-          url: facilitatorUrl,
-          delegated: true,
-          error: error instanceof Error ? error.message : String(error),
-        },
-        reason: 'The configured x402 facilitator could not be reached or returned an invalid response.',
-        nextStep: 'Check X402_FACILITATOR_URL and facilitator health, then retry the paid request.',
-      };
-    }
-  }
-
   return {
     success: true,
     verified: devAccepted,
-    mode: devAccepted ? 'dev-unsigned-receipt-accepted' : 'verification-scaffold-only',
+    mode: devAccepted ? 'dev-unsigned-receipt-accepted' : 'native-phrs-receipt-required',
     quoteId: input.quoteId,
     settlementBroadcastEnabled: false,
     onChainWritesEnabled: false,
     reason: devAccepted
       ? 'Unsigned receipt accepted only because X402_DEV_ACCEPT_UNSIGNED_RECEIPT=true.'
-      : 'No settlement verification is performed by this Phase 1 Skill. Use an official x402 facilitator or a separate payment Skill for production settlement.',
+      : 'No valid confirmed Pharos Atlantic PHRS transfer txHash was supplied in PAYMENT-SIGNATURE.',
     nextStep: devAccepted
       ? 'The paid route may return demo content, but no on-chain payment was settled by this Skill.'
-      : 'Return 402 payment requirements or delegate verification to a separate x402 payment service.',
+      : 'Send native PHRS to the quoted payTo address, then submit PAYMENT-SIGNATURE as base64 JSON: {"txHash":"0x...","payer":"0x... optional"}.',
   };
 }
 
@@ -474,10 +456,4 @@ export function decodeBase64Json(value?: string): unknown {
   } catch {
     return undefined;
   }
-}
-
-function isFacilitatorVerified(value: unknown) {
-  if (!value || typeof value !== 'object') return false;
-  const record = value as Record<string, unknown>;
-  return record.verified === true || record.valid === true || record.success === true;
 }

@@ -22,7 +22,6 @@ requires:
     - PORT
     - X402_ENABLED
     - X402_RECEIVER_ADDRESS
-    - X402_FACILITATOR_URL
 ---
 
 # Pharos Quant Strategy Lifecycle Skill
@@ -115,7 +114,7 @@ Requests that omit `Accept: application/json, text/event-stream` may receive `40
 | Inspect optional x402 gateway status | `x402_payment_status` | `references/x402-payments.md` |
 | List optional paid x402 resources | `x402_product_catalog` | `references/x402-payments.md` |
 | Create x402-style payment requirements | `x402_quote` | `references/x402-payments.md` |
-| Verify x402 receipt scaffold without settlement | `x402_receipt_verify` | `references/x402-payments.md` |
+| Verify a public PHRS payment receipt without broadcast | `x402_receipt_verify` | `references/x402-payments.md` |
 
 ## Recommended Agent Workflow
 
@@ -170,7 +169,7 @@ This Skill is safe-by-design for Phase 1:
 - No private key output.
 - Strategy code runs in a restricted sandbox.
 - Generated artifacts are research artifacts, not execution authorization.
-- Optional x402 tools only create payment requirements or verify receipt scaffolds; they do not settle payments.
+- Optional x402 tools create PHRS payment requirements or verify confirmed public Pharos Atlantic PHRS receipts; they do not sign or broadcast payments.
 
 ## References
 

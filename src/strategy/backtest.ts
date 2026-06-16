@@ -2,6 +2,7 @@ import type { BacktestResult, Candle, PositionState, StrategyContext, StrategyQu
 import { compileStrategy, normalizeDecision } from './sandbox.js';
 import { createSampleCandles, intervalForPeriod } from './sampleData.js';
 import type { PeriodInterval } from './sampleData.js';
+import { runBenchmarkSet } from './benchmarks.js';
 import { precomputeIndicators } from './indicators.js';
 import { loadPreferredMarketCandles } from './marketData.js';
 import type { MarketDataset } from './marketData.js';
@@ -139,6 +140,13 @@ export function runBacktest(params: {
     equity: roundMetric(equity),
     drawdownPct: roundMetric(drawdown.curve[index]),
   }));
+  const benchmarks = runBenchmarkSet({
+    candles,
+    initialCapital,
+    strategyReturnPct: returnPct,
+    feeRate,
+    slippageRate,
+  });
 
   return {
     success: true,
@@ -172,6 +180,7 @@ export function runBacktest(params: {
     stabilityScore: scoreStability({ sharpeRatio: sharpe, maxDrawdownPct: drawdownPct, totalTrades: trades.length }),
     capitalEfficiencyScore: scoreCapitalEfficiency({ totalReturnPct: returnPct, exposurePct, totalTrades: trades.length }),
     strategyQuality,
+    benchmarks,
     trades,
     equityCurve,
   };

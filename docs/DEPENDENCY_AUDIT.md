@@ -16,14 +16,14 @@ found 0 vulnerabilities
 
 ## What Changed
 
-Earlier installs reported 2 moderate vulnerabilities from `ethers` through its nested `ws` dependency:
+Earlier official-registry audits reported 7 high vulnerabilities that collapsed to vulnerable `ws` ranges pulled through `ethers`, `viem`, and the earlier x402 SDK experiment dependencies:
 
 ```text
-ethers -> ws >=8.0.0 <8.20.1
-GHSA-58qx-3vcg-4xpx
+ws >=8.0.0 <8.21.0
+GHSA-96hv-2xvq-fx4p
 ```
 
-The project keeps `ethers` v6 and uses an npm override to pin the nested `ws` package to `8.20.1`, the patched version. This avoids downgrading `ethers` to v5, which would be a semver-major API change for this codebase.
+The project keeps the current `ethers` v6 and `viem` v2 packages, removes the unused x402 SDK experiment dependencies, and uses npm overrides to pin vulnerable nested `ws` copies to `8.21.0`, the patched version. This avoids downgrading `ethers` to v5 or `viem` to an old major-incompatible release just to satisfy npm's automatic force-fix suggestion.
 
 ## Registry Note
 
@@ -39,6 +39,7 @@ npm run validate:skill
 npm run typecheck
 npm test
 npm run judge:smoke
+npm run audit:security
 ```
 
 Production-only installs can omit packages such as `@types/node`, so they are not sufficient for `npm run typecheck`.

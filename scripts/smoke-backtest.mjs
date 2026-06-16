@@ -14,6 +14,12 @@ for (const result of results) {
   if (!result.winRateBasis || !Number.isFinite(result.unrealizedPnl) || !Number.isFinite(result.exposurePct)) {
     throw new Error(`Missing risk/exposure fields for ${result.period}`);
   }
+  if (!result.benchmarks?.buyAndHold || !result.benchmarks?.comparison) {
+    throw new Error(`Missing benchmark summary for ${result.period}`);
+  }
+  if (!Number.isFinite(result.benchmarks.comparison.strategyVsBuyAndHoldPct)) {
+    throw new Error(`Invalid benchmark comparison for ${result.period}`);
+  }
 }
 
 console.log(JSON.stringify({
@@ -21,6 +27,8 @@ console.log(JSON.stringify({
   periods: results.map((result) => ({
     period: result.period,
     totalReturnPct: result.totalReturnPct,
+    buyAndHoldReturnPct: result.benchmarks.buyAndHold.totalReturnPct,
+    strategyVsBuyAndHoldPct: result.benchmarks.comparison.strategyVsBuyAndHoldPct,
     maxDrawdownPct: result.maxDrawdownPct,
     totalTrades: result.totalTrades,
   })),

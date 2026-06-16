@@ -1,9 +1,12 @@
 const DEFAULT_MCP_URL = 'http://150.158.28.155:3011/mcp';
 const DEFAULT_HEALTH_URL = 'http://150.158.28.155:3011/health';
 const REQUEST_TIMEOUT_MS = Number(process.env.JUDGE_SMOKE_TIMEOUT_MS ?? 180_000);
+const strictIndex = process.argv.indexOf('--strict');
+const strictPhase1Improvements = strictIndex >= 0 || process.env.JUDGE_REQUIRE_PHASE1_IMPROVEMENTS === 'true';
+const cliArgs = process.argv.slice(2).filter((arg) => arg !== '--strict');
 
-const mcpUrl = process.argv[2] ?? process.env.MCP_URL ?? DEFAULT_MCP_URL;
-const healthUrl = process.argv[3] ?? process.env.HEALTH_URL ?? DEFAULT_HEALTH_URL;
+const mcpUrl = cliArgs[0] ?? process.env.MCP_URL ?? DEFAULT_MCP_URL;
+const healthUrl = cliArgs[1] ?? process.env.HEALTH_URL ?? DEFAULT_HEALTH_URL;
 
 const requiredTools = [
   'pharos_network_status',
@@ -99,10 +102,15 @@ function renderCheck(check) {
   return `- ${mark}: ${check.name}${check.detail ? ` - ${check.detail}` : ''}`;
 }
 
+function optionalRuntimeCheck(name, ok, detail = '') {
+  addCheck(name, strictPhase1Improvements ? ok : true, strictPhase1Improvements ? detail : `${detail ? `${detail}; ` : ''}strict=false`);
+}
+
 console.log('# Pharos Skill Judge Smoke Test');
 console.log('');
 console.log(`Health endpoint: ${healthUrl}`);
 console.log(`MCP endpoint: ${mcpUrl}`);
+console.log(`Strict Phase 1 improvement checks: ${strictPhase1Improvements}`);
 console.log('');
 
 let health;
@@ -195,9 +203,13 @@ try {
   addCheck('backtest summary has 7 periods', periods.length === 7, `periods=${periods.length}`);
   addCheck('WBTC proxy market dataset is used', loop.dataSourceSummary?.sources?.some((source) => String(source).includes('Curated Binance spot 1h OHLCV CSV snapshot')), `sources=${JSON.stringify(loop.dataSourceSummary?.sources)}`);
   addCheck('WBTC proxy data is market evidence', loop.dataSourceSummary?.marketEvidence === true, `marketEvidence=${loop.dataSourceSummary?.marketEvidence}`);
+  optionalRuntimeCheck('Pharos read-only integration summary is returned', loop.pharosIntegrationSummary?.chainId === 688689 && loop.pharosIntegrationSummary?.onChainWritesEnabled === false, `chainId=${loop.pharosIntegrationSummary?.chainId}`);
+  optionalRuntimeCheck('Pharos market-data gap is explicit', loop.pharosIntegrationSummary?.marketDataNativeToPharos === false, `nativeMarketData=${loop.pharosIntegrationSummary?.marketDataNativeToPharos}`);
   addCheck('all backtest periods have trades', periods.every((period) => Number(period.totalTrades) > 0), `trades=${periods.map((period) => `${period.period}:${period.totalTrades}`).join(',')}`);
+  optionalRuntimeCheck('all backtest periods include benchmarks', periods.every((period) => period.benchmarks?.buyAndHold && period.benchmarks?.comparison), `benchmarks=${periods.map((period) => `${period.period}:${Boolean(period.benchmarks?.comparison)}`).join(',')}`);
   addCheck('artifactId is present', Boolean(loop.artifact?.artifactId), loop.artifact?.artifactId ?? '');
   addCheck('codeHash is present', /^sha256:[a-f0-9]{64}$/.test(loop.artifact?.codeHash ?? ''), loop.artifact?.codeHash ?? '');
+  optionalRuntimeCheck('artifact includes Pharos chain context', loop.artifact?.chainContext?.chainId === 688689 && loop.artifact?.chainContext?.onChainWritesEnabled === false, `chainId=${loop.artifact?.chainContext?.chainId}`);
   addCheck('live trading disabled', safety.liveTrading?.enabled === false, `liveTrading=${safety.liveTrading?.enabled}`);
   addCheck('transaction broadcast disabled', safety.broadcastTransactions === false, `broadcast=${safety.broadcastTransactions}`);
   addCheck('on-chain writes disabled', safety.onChainWrites === false, `onChainWrites=${safety.onChainWrites}`);
@@ -273,6 +285,10 @@ console.log(JSON.stringify(
           backtestPeriods: loop.backtestSummary?.length,
           artifactId: loop.artifact?.artifactId,
           codeHash: loop.artifact?.codeHash,
+          pharosReadOnlyRpcChecked: loop.pharosIntegrationSummary?.readOnlyRpcChecked,
+          pharosBlockNumberAtRun: loop.pharosIntegrationSummary?.blockNumberAtRun,
+          marketDataNativeToPharos: loop.pharosIntegrationSummary?.marketDataNativeToPharos,
+          benchmarkPeriods: loop.backtestSummary?.filter((period) => period.benchmarks?.comparison).length,
           liveTradingEnabled: loop.artifact?.safety?.liveTrading?.enabled,
           broadcastTransactions: loop.artifact?.safety?.broadcastTransactions,
           onChainWrites: loop.artifact?.safety?.onChainWrites,

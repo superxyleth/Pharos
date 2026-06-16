@@ -29,7 +29,7 @@ function sendServiceUnavailable(res: Response) {
   return res.status(503).json({
     success: false,
     error: 'x402_disabled',
-    message: 'x402 payment gateway is disabled by default. Enable it with X402_ENABLED=true and configure receiver/facilitator details.',
+    message: 'x402 payment gateway is disabled by default. Enable it with X402_ENABLED=true and configure X402_RECEIVER_ADDRESS for public PHRS receipt verification.',
     status: getX402Status(),
   });
 }
