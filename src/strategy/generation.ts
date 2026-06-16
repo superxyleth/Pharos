@@ -9,7 +9,8 @@ ctx.indicators provides precomputed ema20, ema50, rsi14, atr14, and previousClos
 Return { action: 'BUY'|'SELL'|'HOLD', amountUsd, fraction, reason, statePatch }.
 Do not use imports, require, process, fs, child_process, eval, Function, fetch, or network access.
 Do not scan the full ctx.candles array inside evaluate(ctx). Use ctx.indicators and statePatch for RSI, EMA, ATR, drawdown, and grid state.
-Use conservative risk controls and clear reasons.`;
+Use conservative risk controls and clear reasons.
+For WBTC/WETH proxy research, prefer trend-following strategies that keep a core position during confirmed uptrends, use partial profit-taking instead of full small-profit exits, and protect downside with hard stops plus trailing stops.`;
 
 export async function generateStrategyCode(params: {
   description: string;
@@ -30,6 +31,8 @@ export async function generateStrategyCode(params: {
     '',
     'Generate robust strategy code with configurable constants at the top.',
     'Use ctx.indicators instead of recalculating EMA, RSI, or ATR from ctx.candles.',
+    'Optimize for multi-period backtest return without promising profit: use EMA trend confirmation, RSI ceilings/pullbacks, ATR risk gating, exposure caps, partial exits, and trailing stops.',
+    'Avoid tiny full-position take-profit rules that exit winners too early on WBTC/WETH trend proxies.',
   ].join('\n');
 
   const raw = await completeText({
@@ -48,7 +51,96 @@ export async function generateStrategyCode(params: {
   };
 }
 
-export function deterministicStrategyTemplate(description: string): string {
+export function deterministicStrategyTemplate(description: string, params: { symbol?: string } = {}): string {
+  const symbol = (params.symbol ?? '').toUpperCase();
+  if (symbol === 'WBTC' || symbol === 'WETH') {
+    return optimizedTrendTemplate(description, symbol);
+  }
+  return guardedDcaTemplate(description);
+}
+
+function optimizedTrendTemplate(description: string, symbol: 'WBTC' | 'WETH'): string {
+  return `// Generated fallback strategy: ${description.replace(/\s+/g, ' ').slice(0, 120)}
+// ${symbol} trend-following proxy template optimized for multi-period research backtests.
+var TARGET_EXPOSURE_PCT = 0.82;
+var ADD_EXPOSURE_STEP_PCT = 0.35;
+var MAX_EXPOSURE_PCT = 0.86;
+var HARD_STOP_LOSS_PCT = 0.10;
+var TRAILING_STOP_PCT = 0.12;
+var ATR_RISK_PCT = 0.065;
+var RSI_OVERHEAT = 82;
+var RSI_PULLBACK_MAX = 72;
+var COOLDOWN_BARS = 6;
+var WARMUP_BARS = 18;
+var MIN_ORDER_USD = 25;
+
+exports.evaluate = function(ctx) {
+  var state = ctx.state || {};
+  var price = ctx.candle.close;
+  var avg = ctx.position.avgEntryPrice || 0;
+  var indicators = ctx.indicators || {};
+  var ema20 = Number(indicators.ema20 || price);
+  var ema50 = Number(indicators.ema50 || price);
+  var rsi14 = Number(indicators.rsi14 || 50);
+  var atr14 = Number(indicators.atr14 || 0);
+  var lastTradeIndex = Number(state.lastTradeIndex || -999999);
+  var peakPrice = Math.max(Number(state.peakPrice || 0), price);
+  var exposure = ctx.equity > 0 ? (ctx.position.baseAmount * price) / ctx.equity : 0;
+  var volatilityPct = price > 0 ? atr14 / price : 0;
+  var primaryTrend = ema20 >= ema50 && price >= ema50 * 0.99;
+  var momentumTrend = price >= ema20 && rsi14 <= RSI_OVERHEAT;
+  var entryOk = ctx.index >= WARMUP_BARS && (primaryTrend || momentumTrend) && volatilityPct <= ATR_RISK_PCT && rsi14 <= RSI_PULLBACK_MAX;
+  var cooledDown = ctx.index - lastTradeIndex >= COOLDOWN_BARS;
+  var weakTrend = ema20 < ema50 && price < ema50 * 0.985;
+  var trailBroken = ctx.position.baseAmount > 0 && peakPrice > 0 && price <= peakPrice * (1 - TRAILING_STOP_PCT) && weakTrend;
+
+  if (ctx.position.baseAmount > 0 && avg > 0 && (price <= avg * (1 - HARD_STOP_LOSS_PCT) || trailBroken)) {
+    return {
+      action: 'SELL',
+      fraction: 1,
+      reason: '${symbol} trend proxy risk-off exit using hard stop or weak-trend trailing stop.',
+      statePatch: { lastTradeIndex: ctx.index, peakPrice: price, riskMode: true }
+    };
+  }
+
+  if (ctx.position.baseAmount > 0 && avg > 0 && price >= avg * 1.22 && rsi14 >= RSI_OVERHEAT && exposure > 0.35) {
+    return {
+      action: 'SELL',
+      fraction: 0.2,
+      reason: '${symbol} trend proxy partial profit lock while keeping core exposure.',
+      statePatch: { lastTradeIndex: ctx.index, peakPrice: peakPrice, riskMode: false }
+    };
+  }
+
+  if (
+    entryOk &&
+    cooledDown &&
+    exposure < MAX_EXPOSURE_PCT &&
+    ctx.position.quoteBalance >= MIN_ORDER_USD &&
+    !state.riskMode
+  ) {
+    var targetSpend = Math.max(0, (TARGET_EXPOSURE_PCT - exposure) * ctx.equity);
+    var stepSpend = ADD_EXPOSURE_STEP_PCT * ctx.equity;
+    var amountUsd = Math.min(Math.max(MIN_ORDER_USD, Math.min(targetSpend, stepSpend)), ctx.position.quoteBalance);
+    if (amountUsd >= MIN_ORDER_USD) {
+      return {
+        action: 'BUY',
+        amountUsd: amountUsd,
+        reason: '${symbol} trend-following entry/add using EMA trend, RSI ceiling, ATR guard, cooldown, and exposure cap.',
+        statePatch: { lastTradeIndex: ctx.index, peakPrice: peakPrice, riskMode: false }
+      };
+    }
+  }
+
+  return {
+    action: 'HOLD',
+    reason: '${symbol} trend proxy holds while trend and downside controls are monitored.',
+    statePatch: { peakPrice: peakPrice, riskMode: state.riskMode && primaryTrend && rsi14 < 62 ? false : state.riskMode }
+  };
+};`;
+}
+
+function guardedDcaTemplate(description: string): string {
   return `// Generated fallback strategy: ${description.replace(/\s+/g, ' ').slice(0, 120)}
 var TOTAL_CAPITAL_U = 1000;
 var BASE_BUY_AMOUNT_U = 30;

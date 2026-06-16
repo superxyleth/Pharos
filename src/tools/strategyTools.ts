@@ -118,7 +118,7 @@ export function registerStrategyTools(server: McpServer) {
         if (!allowFallback) {
           return errorResult(error instanceof Error ? error.message : String(error));
         }
-        const code = deterministicStrategyTemplate(description);
+        const code = deterministicStrategyTemplate(description, { symbol });
         return textResult({
           success: true,
           fallback: true,

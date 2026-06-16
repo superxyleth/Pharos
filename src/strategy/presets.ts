@@ -10,15 +10,17 @@ export interface StrategyPreset {
 
 function wrappedTrendProxyCode(asset: 'WBTC' | 'WETH', proxyPair: 'BTCUSDT' | 'ETHUSDT') {
   return `// ${asset} trend proxy preset using ${proxyPair} 1H market candles
-var BASE_BUY_AMOUNT_U = 35;
-var MAX_EXPOSURE_PCT = 0.55;
-var TAKE_PROFIT_PCT = 0.035;
-var STOP_LOSS_PCT = 0.075;
-var RSI_BUY_BELOW = 54;
-var RSI_RISK_OFF_ABOVE = 74;
-var ATR_RISK_PCT = 0.045;
-var COOLDOWN_BARS = 8;
-var PROBE_ENTRY_AFTER_BARS = 36;
+var TARGET_EXPOSURE_PCT = 0.82;
+var ADD_EXPOSURE_STEP_PCT = 0.35;
+var MAX_EXPOSURE_PCT = 0.86;
+var HARD_STOP_LOSS_PCT = 0.10;
+var TRAILING_STOP_PCT = 0.12;
+var ATR_RISK_PCT = 0.065;
+var RSI_OVERHEAT = 82;
+var RSI_PULLBACK_MAX = 72;
+var COOLDOWN_BARS = 6;
+var WARMUP_BARS = 18;
+var MIN_ORDER_USD = 25;
 
 exports.evaluate = function(ctx) {
   var state = ctx.state || {};
@@ -29,55 +31,59 @@ exports.evaluate = function(ctx) {
   var ema50 = Number(indicators.ema50 || price);
   var rsi14 = Number(indicators.rsi14 || 50);
   var atr14 = Number(indicators.atr14 || 0);
-  var lastBuyIndex = Number(state.lastBuyIndex || -999999);
+  var lastTradeIndex = Number(state.lastTradeIndex || -999999);
+  var peakPrice = Math.max(Number(state.peakPrice || 0), price);
   var exposure = ctx.equity > 0 ? (ctx.position.baseAmount * price) / ctx.equity : 0;
-  var trendOk = ema20 >= ema50 && price >= ema20 * 0.995;
   var volatilityPct = price > 0 ? atr14 / price : 0;
-  var volatilityOk = volatilityPct <= ATR_RISK_PCT;
-  var cooledDown = ctx.index - lastBuyIndex >= COOLDOWN_BARS;
-  var warm = ctx.index >= PROBE_ENTRY_AFTER_BARS;
+  var primaryTrend = ema20 >= ema50 && price >= ema50 * 0.99;
+  var momentumTrend = price >= ema20 && rsi14 <= RSI_OVERHEAT;
+  var entryOk = ctx.index >= WARMUP_BARS && (primaryTrend || momentumTrend) && volatilityPct <= ATR_RISK_PCT && rsi14 <= RSI_PULLBACK_MAX;
+  var cooledDown = ctx.index - lastTradeIndex >= COOLDOWN_BARS;
+  var weakTrend = ema20 < ema50 && price < ema50 * 0.985;
+  var trailBroken = ctx.position.baseAmount > 0 && peakPrice > 0 && price <= peakPrice * (1 - TRAILING_STOP_PCT) && weakTrend;
 
-  if (ctx.position.baseAmount > 0 && avg > 0 && (price <= avg * (1 - STOP_LOSS_PCT) || (!trendOk && rsi14 >= RSI_RISK_OFF_ABOVE))) {
+  if (ctx.position.baseAmount > 0 && avg > 0 && (price <= avg * (1 - HARD_STOP_LOSS_PCT) || trailBroken)) {
     return {
       action: 'SELL',
       fraction: 1,
-      reason: '${asset} proxy risk-off exit from stop-loss, weak trend, or overheated RSI.',
-      statePatch: { lastBuyIndex: ctx.index, riskMode: true }
+      reason: '${asset} proxy risk-off exit using hard stop or weak-trend trailing stop.',
+      statePatch: { lastTradeIndex: ctx.index, peakPrice: price, riskMode: true }
     };
   }
 
-  if (ctx.position.baseAmount > 0 && avg > 0 && price >= avg * (1 + TAKE_PROFIT_PCT)) {
+  if (ctx.position.baseAmount > 0 && avg > 0 && price >= avg * 1.22 && rsi14 >= RSI_OVERHEAT && exposure > 0.35) {
     return {
       action: 'SELL',
-      fraction: 0.5,
-      reason: '${asset} proxy partial take-profit above average entry.',
-      statePatch: { lastBuyIndex: ctx.index, riskMode: false }
+      fraction: 0.2,
+      reason: '${asset} proxy partial profit lock while keeping core exposure.',
+      statePatch: { lastTradeIndex: ctx.index, peakPrice: peakPrice, riskMode: false }
     };
   }
 
   if (
-    warm &&
+    entryOk &&
     cooledDown &&
-    trendOk &&
-    volatilityOk &&
-    rsi14 <= RSI_BUY_BELOW &&
     exposure < MAX_EXPOSURE_PCT &&
-    ctx.position.quoteBalance >= BASE_BUY_AMOUNT_U &&
+    ctx.position.quoteBalance >= MIN_ORDER_USD &&
     !state.riskMode
   ) {
-    var volatilityScale = Math.max(0.35, 1 - volatilityPct / ATR_RISK_PCT);
-    return {
-      action: 'BUY',
-      amountUsd: Math.min(BASE_BUY_AMOUNT_U * volatilityScale, ctx.position.quoteBalance),
-      reason: '${asset} proxy trend/DCA entry using EMA, RSI, ATR, cooldown, and exposure guard.',
-      statePatch: { lastBuyIndex: ctx.index, riskMode: false }
-    };
+    var targetSpend = Math.max(0, (TARGET_EXPOSURE_PCT - exposure) * ctx.equity);
+    var stepSpend = ADD_EXPOSURE_STEP_PCT * ctx.equity;
+    var amountUsd = Math.min(Math.max(MIN_ORDER_USD, Math.min(targetSpend, stepSpend)), ctx.position.quoteBalance);
+    if (amountUsd >= MIN_ORDER_USD) {
+      return {
+        action: 'BUY',
+        amountUsd: amountUsd,
+        reason: '${asset} proxy trend-following entry/add using EMA trend, RSI ceiling, ATR guard, cooldown, and exposure cap.',
+        statePatch: { lastTradeIndex: ctx.index, peakPrice: peakPrice, riskMode: false }
+      };
+    }
   }
 
   return {
     action: 'HOLD',
-    reason: '${asset} proxy conditions are not aligned for entry or exit.',
-    statePatch: { riskMode: state.riskMode && trendOk && rsi14 < 62 ? false : state.riskMode }
+    reason: '${asset} proxy holds while trend and downside controls are monitored.',
+    statePatch: { peakPrice: peakPrice, riskMode: state.riskMode && primaryTrend && rsi14 < 62 ? false : state.riskMode }
   };
 };`;
 }

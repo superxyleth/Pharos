@@ -43,7 +43,7 @@ export function registerLoopTools(server: McpServer) {
           try {
             generated = await generateStrategyCode({ description, symbol, chain, initialCapital });
           } catch (error) {
-            const code = deterministicStrategyTemplate(description);
+            const code = deterministicStrategyTemplate(description, { symbol });
             generated = {
               success: true as const,
               fallback: true,
@@ -53,7 +53,7 @@ export function registerLoopTools(server: McpServer) {
             };
           }
         } else {
-          const code = deterministicStrategyTemplate(description);
+          const code = deterministicStrategyTemplate(description, { symbol });
           generated = {
             success: true as const,
             fallback: false,
