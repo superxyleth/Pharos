@@ -10,6 +10,41 @@ For judges:
 - Use `docs/JUDGE_DEMO_60_SECONDS.md` for the shortest copy-paste public MCP test.
 - The recommended strategy path is `WBTC` first, with `WETH` as the ETH proxy comparison path.
 
+## Judge Start Here
+
+```bash
+curl http://150.158.28.155:3011/health
+```
+
+```bash
+curl -X POST http://150.158.28.155:3011/mcp \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+```
+
+```text
+Recommended MCP tool: quant_loop_run
+Arguments: symbol=WBTC, useOpenAI=false
+```
+
+```bash
+curl -X POST http://150.158.28.155:3011/paid/quant-report \
+  -H "Content-Type: application/json" \
+  -d '{"symbol":"WBTC"}'
+```
+
+Expected paid-route result before payment:
+
+```text
+HTTP 402 Payment Required
+PAYMENT-REQUIRED header present
+```
+
+```bash
+npm run judge:smoke:strict
+```
+
 ## 60-Second Judge Summary
 
 This is Agent Skill infrastructure for Pharos Phase 1, not an alpha-seeking trading bot.

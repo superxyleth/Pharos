@@ -654,3 +654,21 @@ M .env.example
 ?? scripts/x402-phrs-smoke.mjs
 ?? src/strategy/benchmarks.ts
 ```
+
+### 20260616-182629 clarify judge paid route entrypoint
+
+- Branch: `main`
+- Previous HEAD: `01d464d`
+- Memory tag: `memory/20260616-182629-clarify-judge-paid-route-entrypoint`
+- Executed:
+  - Updated `docs/PUSH_LOG.md`
+  - Staged current tracked and untracked safe files
+  - Created a Git commit
+  - Created an annotated memory tag
+  - Pushed branch and tags to `origin`
+- Workspace changes before push:
+```text
+M README.md
+ M docs/JUDGE_REPORT.md
+ M src/x402/routes.ts
+```

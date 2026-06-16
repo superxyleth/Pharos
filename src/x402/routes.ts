@@ -34,6 +34,22 @@ function sendServiceUnavailable(res: Response) {
   });
 }
 
+function sendPaidRouteMethodHint(res: Response, route: string, method: 'GET' | 'POST') {
+  return res.status(405).json({
+    success: false,
+    error: 'method_not_allowed',
+    message: `Use ${method} ${route} to receive x402 payment requirements.`,
+    example: {
+      method,
+      url: route,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: method === 'POST' ? { symbol: 'WBTC' } : undefined,
+    },
+  });
+}
+
 function canServeDemoReceipt(req: Request) {
   const header = req.header('x-x402-demo-receipt');
   return appConfig.x402.devAcceptUnsignedReceipt && header === 'accepted';
@@ -146,6 +162,8 @@ export function registerX402Routes(app: Express) {
     });
   });
 
+  app.get('/paid/quant-report', (_req, res) => sendPaidRouteMethodHint(res, '/paid/quant-report', 'POST'));
+
   app.post('/paid/quant-report', async (req, res) => {
     const quote = createX402Quote({
       productId: 'paid-quant-report',
@@ -171,6 +189,8 @@ export function registerX402Routes(app: Express) {
       x402: quote,
     });
   });
+
+  app.get('/paid/dry-run-plan', (_req, res) => sendPaidRouteMethodHint(res, '/paid/dry-run-plan', 'POST'));
 
   app.post('/paid/dry-run-plan', async (req, res) => {
     const quote = createX402Quote({

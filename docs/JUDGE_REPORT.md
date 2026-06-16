@@ -15,6 +15,21 @@ MCP:        http://150.158.28.155:3011/mcp
 x402:       http://150.158.28.155:3011/x402/status
 ```
 
+Paid route quick check uses `POST`, not browser `GET`:
+
+```bash
+curl -X POST http://150.158.28.155:3011/paid/quant-report \
+  -H "Content-Type: application/json" \
+  -d '{"symbol":"WBTC"}'
+```
+
+Expected result before payment:
+
+```text
+HTTP 402 Payment Required
+PAYMENT-REQUIRED header present
+```
+
 Required MCP headers:
 
 ```text
