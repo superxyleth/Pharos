@@ -33,11 +33,11 @@ app.get('/health', (_req, res) => {
     network: 'pharos-atlantic-testnet',
     mcpEndpoint: '/mcp',
     x402: {
-      enabled: appConfig.x402.enabled,
-      statusEndpoint: '/x402/status',
-      productsEndpoint: '/x402/products',
-      note: 'Optional x402 paid gateway scaffolding is disabled by default and does not broadcast transactions.',
-    },
+    enabled: appConfig.x402.enabled,
+    statusEndpoint: '/x402/status',
+    productsEndpoint: '/x402/products',
+    note: 'Optional x402 Phase 2 paid-access extension layer is reviewable and does not broadcast transactions, execute trades, or write on-chain.',
+  },
   });
 });
 

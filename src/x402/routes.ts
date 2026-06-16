@@ -141,7 +141,7 @@ export function registerX402Routes(app: Express) {
       success: true,
       paid: true,
       artifactId: req.params.artifactId,
-      message: 'Demo paid artifact content. This route is protected by x402 scaffolding only and does not settle on-chain.',
+      message: 'Demo paid artifact content for the Phase 2 paid-access extension layer. This route does not settle on-chain or execute trades.',
       x402: quote,
     });
   });

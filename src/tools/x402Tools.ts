@@ -44,7 +44,7 @@ export function registerX402Tools(server: McpServer) {
   server.registerTool(
     'x402_receipt_verify',
     {
-      description: 'Verify an x402 receipt scaffold without settlement. Production settlement must be delegated to a separate payment service.',
+      description: 'Verify an x402 payment receipt for the optional Phase 2 paid-access layer without settlement broadcast. Production settlement must be delegated to a separate payment service.',
       inputSchema: {
         quoteId: z.string().optional().describe('Quote ID returned by x402_quote.'),
         paymentPayload: z.unknown().optional().describe('Optional x402 payment payload or PAYMENT-SIGNATURE content.'),
