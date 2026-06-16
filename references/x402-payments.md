@@ -1,6 +1,6 @@
 # x402 Payments
 
-This Skill supports an optional x402-style paid gateway layer for future monetized resources.
+This Skill supports an optional x402-style Phase 2 paid-access extension layer for future monetized resources, reports, and dry-run execution plans.
 
 The gateway is disabled by default and does not affect the core Phase 1 research workflow.
 
@@ -8,6 +8,7 @@ The gateway is disabled by default and does not affect the core Phase 1 research
 
 - Exposes x402 status and product catalog endpoints.
 - Produces Pharos x402 payment requirements for optional paid resources.
+- Accepts quote requests by either catalog `productId` or direct `resource + method`.
 - Returns `PAYMENT-REQUIRED` headers on protected resources.
 - Accepts `PAYMENT-SIGNATURE` headers and can delegate verification to a configured facilitator.
 - Keeps settlement and transaction broadcast disabled by default.
@@ -128,7 +129,7 @@ This mode verifies an existing native PHRS payment and does not broadcast settle
 ## Quote Flow
 
 1. Inspect `x402_product_catalog`.
-2. Call `x402_quote` for the selected product.
+2. Call `x402_quote` for the selected product, either with `productId` or with `resource + method`.
 3. Read the returned payment requirements.
 4. Protected HTTP routes return `HTTP 402 Payment Required` with a base64-encoded `PAYMENT-REQUIRED` header.
 5. A client can retry with a base64-encoded `PAYMENT-SIGNATURE` header.
@@ -136,6 +137,25 @@ This mode verifies an existing native PHRS payment and does not broadcast settle
 7. This Skill does not call `/settle`; keep production settlement in a separate payment service.
 8. Keep the Phase 1 research tools free and unchanged.
 
+Catalog product example:
+
+```json
+{
+  "productId": "paid-full-artifact",
+  "resource": "/paid/artifacts/pharos-demo-artifact",
+  "method": "GET"
+}
+```
+
+Direct resource/method example:
+
+```json
+{
+  "resource": "/paid/quant-report",
+  "method": "POST"
+}
+```
+
 ## Review Guidance
 
-Reviewers should treat x402 as an optional monetization shell around paid resources, not as part of the core research Skill.
+Reviewers should treat x402 as an optional Phase 2 paid-access layer around future paid resources and execution-plan handoffs, not as part of the free core research Skill and not as live trading infrastructure.

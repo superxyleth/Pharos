@@ -160,9 +160,24 @@ try {
   addCheck('x402_payment_status returns safe payment status', false, error.message);
 }
 
+let x402Quote;
+try {
+  x402Quote = await callTool(6, 'x402_quote', {
+    resource: '/paid/quant-report',
+    method: 'POST',
+  });
+  addCheck('x402 quote accepts resource + method', x402Quote.success === true, `success=${x402Quote.success}`);
+  addCheck('x402 quote resolves paid quant report product', x402Quote.product?.id === 'paid-quant-report', `product=${x402Quote.product?.id}`);
+  addCheck('x402 quote preserves resource', x402Quote.requirements?.resource === '/paid/quant-report', `resource=${x402Quote.requirements?.resource}`);
+  addCheck('x402 quote preserves method', x402Quote.requirements?.method === 'POST', `method=${x402Quote.requirements?.method}`);
+  addCheck('x402 quote remains Phase 1 safe', x402Quote.safety?.settlementBroadcastEnabled === false && x402Quote.safety?.onChainWritesEnabled === false);
+} catch (error) {
+  addCheck('x402_quote accepts direct resource/method requests', false, error.message);
+}
+
 let loop;
 try {
-  loop = await callTool(6, 'quant_loop_run', {
+  loop = await callTool(7, 'quant_loop_run', {
     description:
       'Generate a WBTC trend and DCA research strategy using the local BTCUSDT three-year proxy dataset, with volatility filter, risk-off exit, and max exposure control. Run full multi-period backtests, produce risk-aware advice, simulate decisions, and export a reusable artifact.',
     symbol: 'WBTC',
@@ -236,6 +251,16 @@ console.log(JSON.stringify(
           mode: x402.mode,
           settlementBroadcastEnabled: x402.settlementBroadcastEnabled,
           onChainWritesEnabled: x402.onChainWritesEnabled,
+        }
+      : null,
+    x402Quote: x402Quote
+      ? {
+          productId: x402Quote.product?.id,
+          quoteId: x402Quote.quoteId,
+          resource: x402Quote.requirements?.resource,
+          method: x402Quote.requirements?.method,
+          settlementBroadcastEnabled: x402Quote.safety?.settlementBroadcastEnabled,
+          onChainWritesEnabled: x402Quote.safety?.onChainWritesEnabled,
         }
       : null,
     loop: loop

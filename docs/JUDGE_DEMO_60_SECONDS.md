@@ -101,7 +101,7 @@ The backtest matrix should include:
 
 Set `symbol` to `WETH` to run the same path on the ETHUSDT three-year proxy dataset.
 
-## 5. x402 Scaffold
+## 5. x402 Phase 2 Extension Layer
 
 ```bash
 curl http://150.158.28.155:3011/x402/status
@@ -116,6 +116,31 @@ Expected markers:
   "defaultAsset": "PHRS",
   "settlementBroadcastEnabled": false,
   "onChainWritesEnabled": false
+}
+```
+
+Quote a future paid report by direct `resource + method`:
+
+```bash
+curl -X POST http://150.158.28.155:3011/x402/quote \
+  -H "Content-Type: application/json" \
+  -d "{\"resource\":\"/paid/quant-report\",\"method\":\"POST\"}"
+```
+
+Expected markers:
+
+```json
+{
+  "success": true,
+  "paymentRequired": true,
+  "httpStatus": 402,
+  "product": {
+    "id": "paid-quant-report"
+  },
+  "requirements": {
+    "resource": "/paid/quant-report",
+    "method": "POST"
+  }
 }
 ```
 

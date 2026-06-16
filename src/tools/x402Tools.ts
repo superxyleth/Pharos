@@ -25,10 +25,10 @@ export function registerX402Tools(server: McpServer) {
   server.registerTool(
     'x402_quote',
     {
-      description: 'Create x402-style payment requirements for an optional paid resource. No transaction is signed or broadcast.',
+      description: 'Create x402-style payment requirements for an optional Phase 2 paid-access resource. Use either productId or resource + method. No transaction is signed or broadcast.',
       inputSchema: {
-        productId: z.string().min(1).describe('Paid product ID, e.g. paid-quant-report, paid-full-artifact, or paid-dry-run-plan.'),
-        resource: z.string().optional().describe('Optional resource path override.'),
+        productId: z.string().min(1).optional().describe('Optional paid product ID, e.g. paid-quant-report, paid-full-artifact, or paid-dry-run-plan.'),
+        resource: z.string().optional().describe('Optional resource path, e.g. /paid/quant-report or /paid/artifacts/pharos-demo-artifact.'),
         method: z.enum(['GET', 'POST']).optional().describe('HTTP method for the protected resource.'),
       },
     },

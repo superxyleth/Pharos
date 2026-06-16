@@ -44,6 +44,13 @@ function readPaymentSignature(req: Request) {
   return decodeBase64Json(header) ?? header;
 }
 
+function normalizeQuoteMethod(value: unknown): 'GET' | 'POST' | undefined {
+  if (typeof value !== 'string') return undefined;
+  const method = value.toUpperCase();
+  if (method === 'GET' || method === 'POST') return method;
+  return undefined;
+}
+
 async function verifyPaidRequest(req: Request, quote: ReturnType<typeof createX402Quote>) {
   if (canServeDemoReceipt(req)) {
     return verifyX402Receipt({
@@ -92,9 +99,9 @@ export function registerX402Routes(app: Express) {
     try {
       const body = readRequestBody(req);
       const quote = createX402Quote({
-        productId: String(body.productId ?? ''),
+        productId: body.productId ? String(body.productId) : undefined,
         resource: body.resource ? String(body.resource) : undefined,
-        method: body.method === 'POST' ? 'POST' : 'GET',
+        method: normalizeQuoteMethod(body.method),
       });
       res.status(200).json(quote);
     } catch (error) {

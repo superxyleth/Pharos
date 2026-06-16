@@ -126,17 +126,19 @@ GET  /x402/status
 GET  /x402/products
 POST /x402/quote
 POST /x402/verify
+quote requests accept either productId or resource + method
 GET  /paid/artifacts/:artifactId returns 402 requirements without payment
-MCP tools expose status, catalog, quote, and receipt verification scaffolding
+MCP tools expose status, catalog, quote, and receipt verification for optional paid-access resources
 ```
 
-Scaffolded:
+Phase 2 extension layer:
 
 ```text
 future paid artifacts
 future paid quant reports
 future facilitator-backed payment verification
-future paid dry-run plans
+future paid dry-run execution-plan access
+future separation from a dedicated execution Skill
 ```
 
 Disabled for Phase 1 safety:
@@ -171,7 +173,7 @@ The strategy sandbox rejects unsafe JavaScript capabilities such as `require`, `
 
 ```text
 WBTC/WETH datasets are CEX spot proxy data, not Pharos DEX/on-chain pool data.
-x402 is a safe scaffold, not full production facilitator settlement.
+x402 is a safe Phase 2 paid-access extension layer, not live trading or full production settlement.
 The exported artifact is a Phase 2 handoff input, not trading authorization.
 OpenAI-backed generation is optional; deterministic mode is recommended for reproducible judging.
 ```

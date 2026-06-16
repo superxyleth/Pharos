@@ -1,6 +1,6 @@
 # x402 Paid Artifact Flow
 
-This example shows how an Agent can discover optional paid resources without disrupting the core free review path.
+This example shows how an Agent can discover optional Phase 2 paid-access resources without disrupting the core free review path.
 
 ## 1. Check x402 Status
 
@@ -57,6 +57,23 @@ onChainWritesEnabled = false
 ```
 
 The response returns x402-style payment requirements but does not settle or broadcast any payment.
+
+Agents can also request a quote directly by protected resource and method when they do not already know the catalog product ID:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 12,
+  "method": "tools/call",
+  "params": {
+    "name": "x402_quote",
+    "arguments": {
+      "resource": "/paid/quant-report",
+      "method": "POST"
+    }
+  }
+}
+```
 
 Expected payment headers:
 

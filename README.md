@@ -25,7 +25,7 @@ The core review path is free and safe by design:
 - no on-chain writes
 - no private key exposure
 
-Optional x402 routes and MCP tools are included as monetization scaffolding for future paid artifacts and reports. They do not change the free core MCP path, and settlement/broadcast behavior remains disabled.
+Optional x402 routes and MCP tools are included as a safe Phase 2 paid-access extension layer for future paid artifacts, reports, and dry-run execution plans. They do not change the free core MCP path, and settlement/broadcast behavior remains disabled in this Phase 1 Skill.
 
 ## Judge Quick Test
 
@@ -193,11 +193,11 @@ Future Phase 2 Agents should:
 
 See `docs/PHASE2_ARTIFACT_REUSE.md`, `examples/consume-artifact-example.json`, and `examples/phase2-agent-consume-artifact-flow.md`.
 
-## Optional x402 Paid Gateway
+## Optional x402 Paid Gateway / Phase 2 Extension Layer
 
-The Skill includes optional x402-style paid gateway scaffolding for future monetized resources.
+The Skill includes an optional x402-style Phase 2 paid-access layer for future monetized resources and execution-plan handoffs.
 
-This layer does not affect the core Phase 1 MCP review path. The public service exposes x402 quote and verification scaffolding for review, while settlement and broadcast behavior remain disabled.
+This layer does not affect the core Phase 1 MCP review path. The public service exposes x402 quote and verification behavior for review, while transaction signing, settlement broadcast, swaps, live trading, and on-chain writes remain disabled.
 
 ```text
 X402_NETWORK=eip155:688689
@@ -216,6 +216,21 @@ POST /x402/verify
 GET  /paid/artifacts/:artifactId
 POST /paid/quant-report
 POST /paid/dry-run-plan
+```
+
+Quote requests may use either a catalog product ID or a direct `resource + method` pair:
+
+```json
+{
+  "productId": "paid-quant-report"
+}
+```
+
+```json
+{
+  "resource": "/paid/quant-report",
+  "method": "POST"
+}
 ```
 
 Official x402 SDK demo scripts:
@@ -237,7 +252,7 @@ Optional MCP tools:
 
 Safety:
 
-- PHRS is used as the default local test asset for this scaffold; production x402 settlement should confirm facilitator support for native PHRS or use a supported ERC20 asset.
+- PHRS is used as the default local test asset for this Phase 2 extension layer; production x402 settlement should confirm facilitator support for native PHRS or use a supported ERC20 asset.
 - protected routes return `PAYMENT-REQUIRED` headers and accept `PAYMENT-SIGNATURE` for facilitator verification.
 - public paid routes also verify confirmed Pharos Atlantic native PHRS transaction hashes for the quoted `payTo`, amount, and resource binding.
 - native PHRS receipt verification binds a transaction hash to one quote/resource/method/payTo/amount tuple to prevent cross-resource replay.
@@ -246,7 +261,7 @@ Safety:
 - x402 does not call facilitator `/settle`.
 - x402 does not sign transactions.
 - x402 does not execute trades.
-- paid routes return HTTP `402 Payment Required` requirements unless a separate payment service verifies settlement.
+- paid routes return HTTP `402 Payment Required` requirements unless a separate payment service or configured verifier confirms payment.
 
 See `references/x402-payments.md`, `assets/x402-products.json`, and `examples/x402-paid-artifact-flow.md`.
 

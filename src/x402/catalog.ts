@@ -16,7 +16,7 @@ export interface X402Product {
 }
 
 export interface X402QuoteInput {
-  productId: string;
+  productId?: string;
   resource?: string;
   method?: 'GET' | 'POST';
 }
@@ -115,7 +115,7 @@ export function getX402Status() {
     devAcceptUnsignedReceipt: appConfig.x402.devAcceptUnsignedReceipt,
     settlementBroadcastEnabled: false,
     onChainWritesEnabled: false,
-    note: 'x402 is optional and disabled by default. This Skill exposes quote and verification scaffolding only; it does not broadcast payments or execute trades.',
+    note: 'x402 is optional and disabled by default. This Phase 1 Skill exposes a safe Phase 2 paid-access extension layer; it does not broadcast payments or execute trades.',
   };
 }
 
@@ -134,10 +134,7 @@ export function getX402Products() {
 }
 
 export function createX402Quote(input: X402QuoteInput) {
-  const product = products.find((item) => item.id === input.productId);
-  if (!product) {
-    throw new Error(`Unknown x402 product: ${input.productId}`);
-  }
+  const product = resolveX402Product(input);
 
   const resource = input.resource ?? product.resource;
   const method = input.method ?? product.method;
@@ -182,9 +179,40 @@ export function createX402Quote(input: X402QuoteInput) {
       settlementBroadcastEnabled: false,
       onChainWritesEnabled: false,
       privateKeyRequired: false,
-      note: 'The quote describes payment requirements only. This Skill does not settle or broadcast payments.',
+      note: 'The quote describes Phase 2 paid-access payment requirements only. This Skill does not settle, broadcast payments, or execute trades.',
     },
   };
+}
+
+function resolveX402Product(input: X402QuoteInput) {
+  const productId = input.productId?.trim();
+  if (productId) {
+    const product = products.find((item) => item.id === productId);
+    if (!product) {
+      throw new Error(`Unknown x402 product: ${productId}`);
+    }
+    return product;
+  }
+
+  const resource = input.resource?.trim();
+  if (!resource) {
+    throw new Error('x402 quote requires either productId or resource + method.');
+  }
+
+  const method = input.method ?? 'GET';
+  const product = products.find((item) => item.method === method && matchesProductResource(item.resource, resource));
+  if (!product) {
+    throw new Error(`Unknown x402 product for ${method} ${resource}`);
+  }
+  return product;
+}
+
+function matchesProductResource(pattern: string, resource: string) {
+  const patternParts = pattern.split('/').filter(Boolean);
+  const resourceParts = resource.split('/').filter(Boolean);
+  if (patternParts.length !== resourceParts.length) return false;
+
+  return patternParts.every((part, index) => part.startsWith(':') || part === resourceParts[index]);
 }
 
 export async function verifyX402Receipt(input: X402ReceiptInput): Promise<X402VerificationResult> {
